@@ -15,13 +15,15 @@ TEMPLATE = app
 SOURCES += main.cpp\
         glview.cpp \
     GLinterface/textures.cpp \
-    GLinterface/button.cpp
+    GLinterface/button.cpp \
+    GLinterface/label.cpp
 
 
 HEADERS  += glview.h \
     GLinterface/textures.h \
     GLinterface/renderobject.h \
-    GLinterface/button.h
+    GLinterface/button.h \
+    GLinterface/label.h
 
 RESOURCES += \
     GLinterface/GLgraphics.qrc

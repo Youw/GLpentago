@@ -30,8 +30,11 @@ GLview::~GLview() {
 
 void GLview::initializeGL() {
 //    glClearColor(1.0,1.0,1.0,0);
-  menu_background_texture.load(":/graphics/background.,jpg",this->context());
+  menu_background_texture.load(":/graphics/background.jpg",this->context());
   b_new_local = Button(this,256,128,512,100,"New local game",Texture2D(":/graphics/button_menu.jpg",this->context()));
+  b_join = Button(this,256,238,512,100,"Join game",Texture2D(":/graphics/button_menu.jpg",this->context()));
+  b_host = Button(this,256,348,512,100,"Host game",Texture2D(":/graphics/button_menu.jpg",this->context()));
+  b_exit = Button(this,256,548,512,100,"Exit",Texture2D(":/graphics/button_menu.jpg",this->context()));
 }
 
 void GLview::resizeGL(int w, int h) {

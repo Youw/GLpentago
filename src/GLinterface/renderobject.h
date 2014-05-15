@@ -1,8 +1,6 @@
 #ifndef RENDEROBJECT_H
 #define RENDEROBJECT_H
 
-#include <set>
-
 class RenderObject
 {
 public:
