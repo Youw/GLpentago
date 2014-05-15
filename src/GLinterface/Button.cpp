@@ -1,50 +1,65 @@
-/*
- *  Created on: 11 груд. 2013
- *      Author: Gasper
- */
+#include "button.h"
 
-#include "Button.h"
+#include <QGLWidget>
 
-Button::Button(Point2D* _verteces, int _tex) : verteces { _verteces[0], _verteces[1] }, texture(_tex) { }
+Button::Button(QGLWidget* parent,
+               int x_left_top,
+               int y_left_top,
+               int width,
+               int height,
+               const string& text,
+               const Texture2D& texture):
+  left_top(x_left_top,y_left_top),
+  right_bottom(x_left_top+width, y_left_top+height) {
 
-Button::Button(Point2D a, Point2D b, int _tex) : verteces { a, b }, texture(_tex) { }
-
-Button::~Button() { }
-
-Point2D* Button::GetVerteces() {
-	return verteces;
+  parent_device = parent;
+  setTexture(texture);
+  setText(text);
 }
 
-void Button::Draw() {
-	Point3D tmp[2] = { GLutils::UnProject(verteces[0]), GLutils::UnProject(verteces[1]) };
-	if (texture) {
-		glEnable(GL_TEXTURE_2D);
-		glBindTexture(GL_TEXTURE_2D, texture);
-		glBegin(GL_QUADS);
-			glTexCoord2d(0.0,0.0); glVertex2d(tmp[0].x, tmp[0].y);
-			glTexCoord2d(1.0,0.0); glVertex2d(tmp[1].x, tmp[0].y);
-			glTexCoord2d(1.0,1.0); glVertex2d(tmp[1].x, tmp[1].y);
-			glTexCoord2d(0.0,1.0); glVertex2d(tmp[0].x, tmp[1].y);
-		glEnd();
-		glDisable(GL_TEXTURE_2D);
-	} else {
-		glBegin(GL_QUADS);
-			glVertex2d(tmp[0].x, tmp[0].y);
-			glVertex2d(tmp[1].x, tmp[0].y);
-			glVertex2d(tmp[1].x, tmp[1].y);
-			glVertex2d(tmp[0].x, tmp[1].y);
-		glEnd();
-	}
+void Button::setTexture(const Texture2D& texture) {
+  this->texture = texture;
+}
+
+void Button::setText(const string& text) {
+  this->text = text;
+}
+
+void Button::setClickCallBack(const std::function<void()>& call_back) {
+  click_call_back = call_back;
+}
+
+void Button::draw() {
+  texture.draw({left_top.first,left_top.second},
+               {right_bottom.first,left_top.second},
+               {right_bottom.first,right_bottom.second},
+               {left_top.first,right_bottom.second});
+  if (parent_device)
+    parent_device->renderText(left_top.first,right_bottom.second,0.0,text);
+}
+
+void Button::click() {
+  if(click_call_back)
+    click_call_back();
+}
+
+void Button::mouseDown(int x, int y) {
+  x=y=x;
+}
+
+void Button::mouseUp(int x, int y) {
+  x=y=x;
+}
+
+void Button::hover(int x, int y) {
+  x=y=x;
+}
+
+void Button::unHover() {
 
 }
 
-void Button::Clicked(Point2D m_coord) {
-	if (m_coord.x < verteces[1].x && m_coord.x > verteces[0].x && m_coord.y < verteces[1].y && m_coord.y > verteces[0].y)
-		for(auto event : OnClick)
-			event(this);
-}
-
-Button Button::operator+=(EventCallback e) {
-	OnClick.push_back(e);
-	return *this;
+bool Button::underMouse(int x, int y) {
+  return (left_top.first < x) && (left_top.second < y) &&
+      (right_bottom.first > x) && (right_bottom.second > y);
 }

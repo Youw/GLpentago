@@ -3,7 +3,7 @@
         <file>pentago.ico</file>
     </qresource>
     <qresource prefix="/graphics">
-        <file>button_menu.jpg</file>
         <file>background.jpg</file>
+        <file>button_menu.jpg</file>
     </qresource>
 </RCC>

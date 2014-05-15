@@ -14,9 +14,16 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         glview.cpp \
+    GLinterface/textures.cpp \
+    GLinterface/button.cpp
 
 
-HEADERS  += glview.h
+HEADERS  += glview.h \
+    GLinterface/textures.h \
+    GLinterface/renderobject.h \
+    GLinterface/button.h
 
 RESOURCES += \
     GLinterface/GLgraphics.qrc
+
+CONFIG += c++11
