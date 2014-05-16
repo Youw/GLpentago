@@ -16,14 +16,16 @@ SOURCES += main.cpp\
         glview.cpp \
     GLinterface/textures.cpp \
     GLinterface/button.cpp \
-    GLinterface/label.cpp
+    GLinterface/label.cpp \
+    GLinterface/GLfontutils.cpp
 
 
 HEADERS  += glview.h \
     GLinterface/textures.h \
     GLinterface/renderobject.h \
     GLinterface/button.h \
-    GLinterface/label.h
+    GLinterface/label.h \
+    GLinterface/GLfontutils.h
 
 RESOURCES += \
     GLinterface/GLgraphics.qrc

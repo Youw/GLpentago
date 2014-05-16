@@ -14,8 +14,7 @@ class QGLWidget;
 class Button: RenderObject
 {
 public:
-  Button(QGLWidget* parent = 0,
-         int x_left_top = 0,
+  Button(int x_left_top = 0,
          int y_left_top = 0,
          int width = 0,
          int height = 0,
@@ -26,6 +25,21 @@ public:
   void setCaption(const string& caption);
   void setClickCallBack(const std::function<void()>& call_back);
   void resize(int width, int height);
+  void setFont(const QFont& font);
+  const QFont& getFont() const { return text.getFont(); }
+
+
+  const GLint* getFontColor() const { return text.getFontColor(); }
+
+  void setFontColor(const GLint* rgba);
+  void setFontColor(GLint red,
+                    GLint green,
+                    GLint blue,
+                    GLint alpha);
+  void setFontColor(GLdouble red,
+                    GLdouble green,
+                    GLdouble blue,
+                    GLdouble alpha);
 
   virtual void draw();
   virtual void click();
