@@ -157,13 +157,13 @@ void GLfont::renderText(float x, float y, const QString &text)
 //    if (!QGLContext::currentContext()->device()->paintingActive())
 //        return;
 
-    glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT | GL_TEXTURE_BIT);
+//    glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT | GL_TEXTURE_BIT);
+//
+//    glEnable(GL_TEXTURE_2D);
+//    glEnable(GL_BLEND);
+//    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     glPushMatrix();
-    glEnable(GL_TEXTURE_2D);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-
     GLuint texture = 0;
     glTranslatef(x, y-fontMetrics().ascent(), 0);
     for (int i = 0; i < text.length(); ++i)
@@ -196,7 +196,7 @@ void GLfont::renderText(float x, float y, const QString &text)
     }
 
     glPopMatrix();
-    glPopAttrib();
+//    glPopAttrib();
 }
 
 } // namespace glutils

@@ -49,18 +49,18 @@ public:
   //draw texture on current OpenGL context
   //starting with left top coordinates
   //and keep original texture size
-  void draw(const point& left_top = point());
+  void draw(const point& left_top = point()) const;
 
   //draw texture on current OpenGL context
   //starting with left top coordinates to right bottom
-  void draw(const point& left_top,const point& right_bottom);
+  void draw(const point& left_top,const point& right_bottom) const;
 
   //draw texture on current OpenGL context
   //in quadrangle setted by input parameters
   void draw(const point& left_top,
              const point& right_top,
              const point& right_bottom,
-             const point& left_bottom);
+             const point& left_bottom) const;
 };
 
 #endif // TEXTURES_H

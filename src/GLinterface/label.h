@@ -9,55 +9,56 @@
 
 class QGLWidget;
 
-class Label: RenderObject
+class Label: public RenderObject
 {
 public:
 
   //x_pos and y_pos - coordinates of base line of first character
   Label(const string& text = "label",
-        int x_pos = 0,
-        int y_pos = 0,
+        int x= 0,
+        int y= 0,
         const QFont& font = QFont());
 
   void setText(const string& text);
   const string& getText() const { return text; }
 
-  //
+  //width of text according to Font
   int width() const { return text_width; }
+  //offset of strike out relative to baseline
   int strikeOutPos() const { return strike_out_pos; }
-
-  void setPos(int x, int y);
-  int posX() const { return x; }
-  int posY() const { return y; }
 
   void setFont(const QFont& font);
   const QFont& getFont() const { return text_font->font(); }
 
   const GLint* getFontColor() const { return color; }
 
-  void setFontColor(const GLint* rgba);
-  void setFontColor(GLint red,
+  void setFontColor4iv(const GLint* rgba);
+  void setFontColor4i(GLint red,
                     GLint green,
                     GLint blue,
                     GLint alpha);
-  void setFontColor(GLdouble red,
+  void setFontColor4d(GLdouble red,
                     GLdouble green,
                     GLdouble blue,
                     GLdouble alpha);
 
-  virtual void draw();
-  virtual void click();
-  virtual void mouseDown(int x, int y);
-  virtual void mouseUp(int x, int y);
-  virtual void hover(int x, int y);
-  virtual void unHover();
-  virtual bool underMouse(int x, int y);
+  virtual void draw() const override;
+//  virtual void click() override;
+//  virtual void mouseDown(int pos_x, int pos_y) override;
+//  virtual void mouseUp(int pos_x, int pos_y) override;
+//  virtual void hover(int pos_x, int pos_y) override;
+//  virtual void unHover() override;
+//  virtual bool underMouse(int pos_x, int pos_y) override;
+  //set and get position of baseline
+  virtual void setPos(int x, int y) override;
+  virtual int posX() const override { return pos_x; }
+  virtual int posY() const override { return pos_y; }
 private:
   std::unique_ptr<glutils::GLfont> text_font;
   string text;
   int text_width;
   int strike_out_pos;
-  int x, y;
+  int pos_x, pos_y;
   GLint color[4];
 };
 

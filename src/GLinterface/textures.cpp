@@ -15,15 +15,17 @@ namespace Textures2DHolder {
 
   static Texture2DInfo loadTexture(const string& filename, QGLContext* context) {
     AllInfo texture;
-    std::lock_guard<std::mutex> lg(m);
-    try {
-      texture = textures_list.at(filename);
-      textures_list[filename].count++;
-    }catch(std::out_of_range&) {
-      QImage im(filename);
-      texture.info = Texture2DInfo(context->bindTexture(im), im.width(), im.height());
-      texture.count = 1;
-      textures_list[filename] = texture;
+    if (filename!="") {
+      std::lock_guard<std::mutex> lg(m);
+      try {
+        texture = textures_list.at(filename);
+        textures_list[filename].count++;
+      }catch(std::out_of_range&) {
+        QImage im(filename);
+        texture.info = Texture2DInfo(context->bindTexture(im), im.width(), im.height());
+        texture.count = 1;
+        textures_list[filename] = texture;
+      }
     }
     return texture.info;
   }
@@ -87,11 +89,11 @@ void Texture2D::release() {
   }
 }
 
-void Texture2D::draw(const point& left_top) {
+void Texture2D::draw(const point& left_top) const {
   draw(left_top,{left_top.x()+width(),left_top.y()+height()});
 }
 
-void Texture2D::draw(const point& left_top,const point& right_bottom) {
+void Texture2D::draw(const point& left_top,const point& right_bottom) const {
   draw(left_top,
         {right_bottom.x(), left_top.y()},
         right_bottom,
@@ -101,8 +103,8 @@ void Texture2D::draw(const point& left_top,const point& right_bottom) {
 void Texture2D::draw(const point& left_top,
            const point& right_top,
            const point& right_bottom,
-           const point& left_bottom) {
-  glEnable(GL_TEXTURE_2D);
+           const point& left_bottom) const {
+//  glEnable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, info.texture);
   glBegin(GL_QUADS);
     glTexCoord2i(0, 1); glVertex2d(left_top.x(), left_top.y());
@@ -110,5 +112,5 @@ void Texture2D::draw(const point& left_top,
     glTexCoord2i(1, 0); glVertex2d(right_bottom.x(), right_bottom.y());
     glTexCoord2i(0, 0); glVertex2d(left_bottom.x(), left_bottom.y());
   glEnd();
-  glDisable(GL_TEXTURE_2D);
+//  glDisable(GL_TEXTURE_2D);
 }

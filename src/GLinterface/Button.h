@@ -11,7 +11,7 @@
 
 class QGLWidget;
 
-class Button: RenderObject
+class Button: public RenderObject
 {
 public:
   Button(int x_left_top = 0,
@@ -24,38 +24,60 @@ public:
   void setTexture(const Texture2D& texture);
   void setCaption(const string& caption);
   void setClickCallBack(const std::function<void()>& call_back);
-  void resize(int width, int height);
+  void setSize(int width, int height);
   void setFont(const QFont& font);
   const QFont& getFont() const { return text.getFont(); }
 
 
   const GLint* getFontColor() const { return text.getFontColor(); }
 
-  void setFontColor(const GLint* rgba);
-  void setFontColor(GLint red,
+  void setFontColor4iv(const GLint* rgba);
+  void setFontColor4i(GLint red,
                     GLint green,
                     GLint blue,
                     GLint alpha);
-  void setFontColor(GLdouble red,
+  void setFontColor4d(GLdouble red,
                     GLdouble green,
                     GLdouble blue,
                     GLdouble alpha);
 
-  virtual void draw();
-  virtual void click();
-  virtual void mouseDown(int x, int y);
-  virtual void mouseUp(int x, int y);
-  virtual void hover(int x, int y);
-  virtual void unHover();
-  virtual bool underMouse(int x, int y);
+  void setActive(bool active);
+  bool isActive() const { return active; }
+
+  bool isPressed() const { return pressed; }
+protected:
+  void setPressed(bool pressed);
+public:
+
+  virtual void draw() const override;
+  virtual void click(int x, int y) override;
+  virtual void mouseDown(int x, int y) override;
+  virtual void mouseUp(int x, int y) override;
+  virtual void hover(int x, int y) override;
+  virtual void unHover() override;
+  virtual bool underMouse(int x, int y) const override;
+
+  //position of left top corner
+  virtual void setPos(int x, int y) override;
+  virtual int posX() const override { return left_top.first; }
+  virtual int posY() const override { return left_top.second; }
+
+  static Texture2D texture_blurr;
+
 private:
   //calculate and set position of text
   void resetTextPos();
   Texture2D texture;
   std::pair<int,int> left_top;
   std::pair<int,int> right_bottom;
+
   Label text;
+  GLint font_color[4];
+
   std::function<void()> click_call_back;
+
+  bool active;
+  bool pressed;
 };
 
 #endif // BUTTON_H
