@@ -2,7 +2,7 @@
 #define GLVIEW_H
 
 #include <QGLWidget>
-#include <QtOpenGL>
+
 #include "GLinterface/textures.h"
 #include "GLinterface/button.h"
 
@@ -18,9 +18,16 @@ protected:
 public:
     GLview(QWidget *parent = 0);
     ~GLview();
+
+    struct Point3D {
+      GLdouble x,y,z;
+    };
+
+    static Point3D unProject(int x, int y);
 private:
     virtual void keyPressEvent(QKeyEvent * e);
     virtual void mouseDoubleClickEvent ( QMouseEvent * event );
+    virtual void mouseMoveEvent(QMouseEvent * event);
 
     int  width, height;
     Texture2D menu_background_texture;
@@ -34,6 +41,8 @@ private:
 #ifdef QT_DEBUG
     float angle;
     int count;
+    int m_x, m_y;
+    Point3D m_w;
 #endif
 };
 

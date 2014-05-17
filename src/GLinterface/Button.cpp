@@ -11,7 +11,7 @@ Button::Button(
                const Texture2D& texture):
   left_top(x_left_top,y_left_top) {
 
-  QFont font = QFont("Algerian", height/2, 40, false);
+  QFont font = QFont("Snap ITC", height/2, 40, false);
   setFont(font);
   setFontColor(0.0,0.0,0.0,1.0);
   resize(width,height);
