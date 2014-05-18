@@ -31,18 +31,7 @@ Label& Label::setFont(const QFont& font) {
   return *this;
 }
 
-Label& Label::setFontColor4iv(const GLint* rgba) {
-  color[0] = rgba[0];
-  color[1] = rgba[1];
-  color[2] = rgba[2];
-  color[3] = rgba[3];
-  return *this;
-}
-
-Label& Label::setFontColor4i(GLint red,
-                          GLint green,
-                          GLint blue,
-                          GLint alpha) {
+Label& Label::setFontColor4i(GLint red, GLint green, GLint blue, GLint alpha) {
   color[0] = red;
   color[1] = green;
   color[2] = blue;
@@ -53,16 +42,7 @@ Label& Label::setFontColor4i(GLint red,
 Label& Label::setFontColor4d(GLdouble red,
                            GLdouble green,
                            GLdouble blue,
-                           GLdouble alpha) {
-
-  GLint int_max = std::numeric_limits<GLint>::max();
-  setFontColor4i(
-        GLint(int_max*red),
-        GLint(int_max*green),
-        GLint(int_max*blue),
-        GLint(int_max*alpha));
-  return *this;
-}
+                           GLdouble alpha)
 
 void Label::draw() const {
 //  GLint cur_color[4];

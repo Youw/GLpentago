@@ -32,15 +32,7 @@ public:
 
   const GLint* getFontColor() const { return color; }
 
-  Label& setFontColor4iv(const GLint* rgba);
-  Label& setFontColor4i(GLint red,
-                    GLint green,
-                    GLint blue,
-                    GLint alpha);
-  Label& setFontColor4d(GLdouble red,
-                    GLdouble green,
-                    GLdouble blue,
-                    GLdouble alpha);
+
 
   virtual void draw() const override;
 //  virtual void click() override;
