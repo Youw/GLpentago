@@ -5,9 +5,10 @@
 
 #include "GLinterface/textures.h"
 #include "GLinterface/renderobject.h"
-#include "GLinterface/button.h"
+#include "GLinterface/menu.h"
 
 #include <vector>
+#include <stack>
 
 class GLview : public QGLWidget
 {
@@ -41,12 +42,20 @@ private:
     int  width, height;
     Texture2D menu_background_texture;
 
-    Button b_new_local;
-    Button b_host;
-    Button b_join;
-    Button b_exit;
+    Menu main_menu;
+    Menu menu_new_game;
+    Menu menu_load_game;
+    Menu menu_join_game;
+    void buildMenus();
+
+    void goMenuBack();
+    void goToMenu(Menu& manu);
+
 
     std::vector<RenderObject*> current_objects;
+
+    std::stack<std::vector<RenderObject*> > view_history;
+
     int m_x, m_y;//mouse window coordinates
     Point3D m_w;//mouse world coordinates
 

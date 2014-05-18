@@ -19,7 +19,7 @@ public:
         int y= 0,
         const QFont& font = QFont());
 
-  void setText(const string& text);
+  Label& setText(const string& text);
   const string& getText() const { return text; }
 
   //width of text according to Font
@@ -27,17 +27,17 @@ public:
   //offset of strike out relative to baseline
   int strikeOutPos() const { return strike_out_pos; }
 
-  void setFont(const QFont& font);
+  Label& setFont(const QFont& font);
   const QFont& getFont() const { return text_font->font(); }
 
   const GLint* getFontColor() const { return color; }
 
-  void setFontColor4iv(const GLint* rgba);
-  void setFontColor4i(GLint red,
+  Label& setFontColor4iv(const GLint* rgba);
+  Label& setFontColor4i(GLint red,
                     GLint green,
                     GLint blue,
                     GLint alpha);
-  void setFontColor4d(GLdouble red,
+  Label& setFontColor4d(GLdouble red,
                     GLdouble green,
                     GLdouble blue,
                     GLdouble alpha);
@@ -49,12 +49,13 @@ public:
 //  virtual void hover(int pos_x, int pos_y) override;
 //  virtual void unHover() override;
 //  virtual bool underMouse(int pos_x, int pos_y) override;
+
   //set and get position of baseline
   virtual void setPos(int x, int y) override;
   virtual int posX() const override { return pos_x; }
   virtual int posY() const override { return pos_y; }
 private:
-  std::unique_ptr<glutils::GLfont> text_font;
+  std::shared_ptr<glutils::GLfont> text_font;
   string text;
   int text_width;
   int strike_out_pos;

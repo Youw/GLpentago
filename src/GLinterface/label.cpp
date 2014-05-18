@@ -12,10 +12,11 @@ Label::Label(
   setText(text);
 }
 
-void Label::setText(const string& text) {
+Label& Label::setText(const string& text) {
   this->text = text;
   this->text_width = text_font->fontMetrics().width(text);
   this->strike_out_pos = text_font->fontMetrics().strikeOutPos();
+  return *this;
 }
 
 void Label::setPos(int x, int y) {
@@ -23,20 +24,22 @@ void Label::setPos(int x, int y) {
   this->pos_y = y;
 }
 
-void Label::setFont(const QFont& font) {
+Label& Label::setFont(const QFont& font) {
   this->text_font.reset(new glutils::GLfont(QFont(font)));
   this->text_width = text_font->fontMetrics().width(text);
   this->strike_out_pos = text_font->fontMetrics().strikeOutPos();
+  return *this;
 }
 
-void Label::setFontColor4iv(const GLint* rgba) {
+Label& Label::setFontColor4iv(const GLint* rgba) {
   color[0] = rgba[0];
   color[1] = rgba[1];
   color[2] = rgba[2];
   color[3] = rgba[3];
+  return *this;
 }
 
-void Label::setFontColor4i(GLint red,
+Label& Label::setFontColor4i(GLint red,
                           GLint green,
                           GLint blue,
                           GLint alpha) {
@@ -44,9 +47,10 @@ void Label::setFontColor4i(GLint red,
   color[1] = green;
   color[2] = blue;
   color[3] = alpha;
+  return *this;
 }
 
-void Label::setFontColor4d(GLdouble red,
+Label& Label::setFontColor4d(GLdouble red,
                            GLdouble green,
                            GLdouble blue,
                            GLdouble alpha) {
@@ -57,6 +61,7 @@ void Label::setFontColor4d(GLdouble red,
         GLint(int_max*green),
         GLint(int_max*blue),
         GLint(int_max*alpha));
+  return *this;
 }
 
 void Label::draw() const {
@@ -66,31 +71,3 @@ void Label::draw() const {
   text_font->renderText(pos_x,pos_y,text);
 //  glColor4iv(cur_color);
 }
-
-//void Label::click() {
-//  //donothing
-//}
-
-//void Label::mouseDown(int x, int y) {
-//  x=y=x;//donothing
-//}
-
-//void Label::mouseUp(int x, int y) {
-//  x=y=x;
-//  //TODO: later
-//}
-
-//void Label::hover(int x, int y) {
-//  x=y=x;
-//  //TODO: later
-//}
-
-//void Label::unHover() {
-//  //TODO: later
-//}
-
-//bool Label::underMouse(int x, int y) {
-//  //TODO: later
-//  x=y=x;
-//  return false;
-//}

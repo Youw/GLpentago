@@ -23,47 +23,54 @@ Button::Button(
   setCaption(caption);
 }
 
-void Button::setTexture(const Texture2D& texture) {
+Button& Button::setTexture(const Texture2D& texture) {
   this->texture = texture;
+  return *this;
 }
 
-void Button::setCaption(const string& text) {
+Button& Button::setCaption(const string& text) {
   this->text.setText(text);
   resetTextPos();
+  return *this;
 }
 
-void Button::setClickCallBack(const std::function<void()>& call_back) {
+Button& Button::setClickCallBack(const std::function<void()>& call_back) {
   click_call_back = call_back;
+  return *this;
 }
 
-void Button::setSize(int width, int height) {
+Button& Button::setSize(int width, int height) {
   right_bottom.first = left_top.first+width;
   right_bottom.second = left_top.second+height;
   QFont font = text.getFont();
   font.setPointSize(height==0?1:height<0?-height/2:height/2);
   text.setFont(font);
   resetTextPos();
+  return *this;
 }
 
-void Button::setFont(const QFont& font) {
+Button& Button::setFont(const QFont& font) {
   text.setFont(font);
+  return *this;
 }
 
-void Button::resetTextPos() {
+Button& Button::resetTextPos() {
   //allign center:
   text.setPos((left_top.first+right_bottom.first-text.width())/2,
               (left_top.second+right_bottom.second)/2+text.strikeOutPos());
+  return *this;
 }
 
-void Button::setFontColor4iv(const GLint* rgba) {
+Button& Button::setFontColor4iv(const GLint* rgba) {
   font_color[0] = rgba[0];
   font_color[1] = rgba[1];
   font_color[2] = rgba[2];
   font_color[3] = rgba[3];
   text.setFontColor4iv(font_color);
+  return *this;
 }
 
-void Button::setFontColor4i(GLint red,
+Button& Button::setFontColor4i(GLint red,
                          GLint green,
                          GLint blue,
                          GLint alpha) {
@@ -72,9 +79,10 @@ void Button::setFontColor4i(GLint red,
   font_color[2] = blue;
   font_color[3] = alpha;
   text.setFontColor4iv(font_color);
+  return *this;
 }
 
-void Button::setFontColor4d(GLdouble red,
+Button& Button::setFontColor4d(GLdouble red,
                          GLdouble green,
                          GLdouble blue,
                          GLdouble alpha) {
@@ -84,18 +92,20 @@ void Button::setFontColor4d(GLdouble red,
         GLint(int_max*green),
         GLint(int_max*blue),
         GLint(int_max*alpha));
+  return *this;
 }
 
 void Button::setActive(bool active) {
   this->active = active;
 }
 
-void Button::setPressed(bool pressed) {
+Button& Button::setPressed(bool pressed) {
   this->pressed = pressed;
   if (pressed)
     text.setFontColor4d(font_color[0],font_color[1],font_color[2],0.7);
   else
     text.setFontColor4iv(font_color);
+  return *this;
 }
 
 
@@ -130,14 +140,16 @@ void Button::draw() const {
 }
 
 void Button::click(int x, int y) {
-  x=y=x;
   if(click_call_back)
     click_call_back();
+  (void)x;
+  (void)y;
 }
 
 void Button::mouseDown(int x, int y) {
   setPressed(true);
-  x=y=x;
+  (void)x;
+  (void)y;
 }
 
 void Button::mouseUp(int x, int y) {
@@ -150,7 +162,8 @@ void Button::mouseUp(int x, int y) {
 
 void Button::hover(int x, int y) {
   setActive(true);
-  x=y=x;
+  (void)x;
+  (void)y;
 }
 
 void Button::unHover() {

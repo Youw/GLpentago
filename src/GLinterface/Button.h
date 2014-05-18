@@ -6,7 +6,7 @@
 #include "label.h"
 
 #include <utility>
-#include <string>
+//#include <string>
 #include <functional>
 
 class QGLWidget;
@@ -21,35 +21,36 @@ public:
          const string& caption = "Button",
          const Texture2D& texture = Texture2D());
 
-  void setTexture(const Texture2D& texture);
-  void setCaption(const string& caption);
-  void setClickCallBack(const std::function<void()>& call_back);
-  void setSize(int width, int height);
-  void setFont(const QFont& font);
+  Button& setTexture(const Texture2D& texture);
+  Button& setCaption(const string& caption);
+  Button& setClickCallBack(const std::function<void()>& call_back);
+  Button& setSize(int width, int height);
+  Button& setFont(const QFont& font);
   const QFont& getFont() const { return text.getFont(); }
-
 
   const GLint* getFontColor() const { return text.getFontColor(); }
 
-  void setFontColor4iv(const GLint* rgba);
-  void setFontColor4i(GLint red,
+  Button& setFontColor4iv(const GLint* rgba);
+  Button& setFontColor4i(GLint red,
                     GLint green,
                     GLint blue,
                     GLint alpha);
-  void setFontColor4d(GLdouble red,
+  Button& setFontColor4d(GLdouble red,
                     GLdouble green,
                     GLdouble blue,
                     GLdouble alpha);
 
-  void setActive(bool active);
-  bool isActive() const { return active; }
-
   bool isPressed() const { return pressed; }
 protected:
-  void setPressed(bool pressed);
+  Button& setPressed(bool pressed);
 public:
 
   virtual void draw() const override;
+
+  virtual void setActive(bool active) override;
+  virtual bool isActive() const override { return active; }
+  virtual bool canBeActive() const override { return true; }
+
   virtual void click(int x, int y) override;
   virtual void mouseDown(int x, int y) override;
   virtual void mouseUp(int x, int y) override;
@@ -66,7 +67,7 @@ public:
 
 private:
   //calculate and set position of text
-  void resetTextPos();
+  Button& resetTextPos();
   Texture2D texture;
   std::pair<int,int> left_top;
   std::pair<int,int> right_bottom;

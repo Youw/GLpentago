@@ -6,5 +6,6 @@
         <file>background.jpg</file>
         <file>button_menu.jpg</file>
         <file>glass_blurred.jpg</file>
+        <file>dots.png</file>
     </qresource>
 </RCC>

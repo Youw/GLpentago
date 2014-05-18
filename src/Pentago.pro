@@ -17,7 +17,8 @@ SOURCES += main.cpp\
     GLinterface/textures.cpp \
     GLinterface/button.cpp \
     GLinterface/label.cpp \
-    GLinterface/GLfontutils.cpp
+    GLinterface/GLfontutils.cpp \
+    GLinterface/menu.cpp
 
 
 HEADERS  += glview.h \
@@ -25,7 +26,8 @@ HEADERS  += glview.h \
     GLinterface/renderobject.h \
     GLinterface/button.h \
     GLinterface/label.h \
-    GLinterface/GLfontutils.h
+    GLinterface/GLfontutils.h \
+    GLinterface/menu.h
 
 RESOURCES += \
     GLinterface/GLgraphics.qrc

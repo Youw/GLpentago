@@ -31,21 +31,86 @@ GLview::~GLview() {
   Button::texture_blurr.release();
 }
 
+void GLview::buildMenus() {
+  Texture2D button_texture(":/graphics/button_menu.jpg",this->context());
+  main_menu.setPos(200,150);
+  main_menu.setSize(624,724);
+  main_menu
+      .setTexture(Texture2D(":/graphics/dots.png",this->context()))
+      .addButton(Button(256,206,512,100,"New game",button_texture).setClickCallBack(
+                   [&]() {
+                       this->goToMenu(menu_new_game);
+                   }))
+      .addButton(Button(256,316,512,100,"Load game",button_texture).setClickCallBack(
+                   [&]() {
+                       this->goToMenu(menu_load_game);
+                   }))
+      .addButton(Button(256,426,512,100,"Join game",button_texture).setClickCallBack(
+                   [&]() {
+                       this->goToMenu(menu_join_game);
+                   }))
+      .addButton(Button(256,536,512,100,"Host game",button_texture))
+      .addButton(Button(256,746,512,100,"Exit",button_texture).setClickCallBack(
+                   [&]() {
+                       this->close();
+                     }));
+
+  menu_new_game.setPos(200,260);
+  menu_new_game.setSize(624,504);
+  menu_new_game
+      .setTexture(Texture2D(":/graphics/dots.png",this->context()))
+      .addButton(Button(256,311,512,100,"New game",button_texture))
+      .addButton(Button(256,421,512,100,"Load game",button_texture))
+      .addButton(Button(256,631,512,100,"Back",button_texture).setClickCallBack(
+                   [&]() {
+                       this->goMenuBack();
+                     }));
+
+  menu_load_game.setPos(200,260);
+  menu_load_game.setSize(624,504);
+  menu_load_game
+      .setTexture(Texture2D(":/graphics/dots.png",this->context()))
+      .addButton(Button(256,311,512,100,"Autosave",button_texture))
+     // .addButton(Button(256,421,512,100,"Load game",button_texture))
+      .addButton(Button(256,631,512,100,"Back",button_texture).setClickCallBack(
+                   [&]() {
+                       this->goMenuBack();
+                     }));
+
+  menu_join_game.setPos(200,260);
+  menu_join_game.setSize(624,504);
+  menu_join_game
+      .setTexture(Texture2D(":/graphics/dots.png",this->context()))
+      .addLabel(Label("Enter Host IP:",300,311, QFont("Snap ITC", 40, 40, false)).setFontColor4d(0.5,0.5,0.5,1))
+      .addButton(Button(256,431,512,100,"Connect",button_texture))
+      .addButton(Button(256,631,512,100,"Back",button_texture).setClickCallBack(
+                   [&]() {
+                       this->goMenuBack();
+                     }));
+}
+
+void GLview::goMenuBack() {
+  if(!view_history.empty()) {
+    current_objects = view_history.top();
+    view_history.pop();
+  }
+  updateGL();
+}
+
+void GLview::goToMenu(Menu& menu) {
+  view_history.push(current_objects);
+  current_objects.clear();
+  current_objects.push_back(&menu);
+  updateGL();
+}
+
 void GLview::initializeGL() {
   Button::texture_blurr.load(":/graphics/glass_blurred.jpg",this->context());
   menu_background_texture.load(":/graphics/background.jpg",this->context());
-  b_new_local = Button(256,128,512,100,"Local game",Texture2D(":/graphics/button_menu.jpg",this->context()));
-  b_join = Button(256,238,512,100,"Join game",Texture2D(":/graphics/button_menu.jpg",this->context()));
-  b_host = Button(256,348,512,100,"Host game",Texture2D(":/graphics/button_menu.jpg",this->context()));
-  b_exit = Button(256,548,512,100,"Exit",Texture2D(":/graphics/button_menu.jpg",this->context()));  
 
-  b_exit.setClickCallBack([&]() {
-    this->close();
-  });
-  current_objects.push_back(&b_new_local);
-  current_objects.push_back(&b_join);
-  current_objects.push_back(&b_host);
-  current_objects.push_back(&b_exit);
+  buildMenus();
+
+  current_objects.push_back(&main_menu );
 
   glEnable(GL_TEXTURE_2D);
   glEnable(GL_BLEND);
@@ -94,13 +159,10 @@ void GLview::paintGL() {
     o->draw();
   }
 
-  renderText(100,100,0.0,QString("Press and hold T or press Y %1")
 #ifdef QT_DEBUG
-             .arg(count)
-#else
-             .arg("")
+  renderText(100,100,0.0,QString("Press and hold T or press Y %1").arg(count));
 #endif
-             );
+
   glColor3f(0.15,0.63,0.02);
   renderText(20,20,QString("Mouse pos: X:%1 Y:%2").arg(m_x).arg(m_y));
   renderText(20,40,QString("Mouse world pos:"));
