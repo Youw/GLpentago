@@ -18,8 +18,7 @@ SOURCES += main.cpp\
     GLinterface/button.cpp \
     GLinterface/label.cpp \
     GLinterface/GLfontutils.cpp \
-    GLinterface/menu.cpp \
-    GLinterface/fontkeeper.cpp
+    GLinterface/menu.cpp
 
 
 HEADERS  += glview.h \

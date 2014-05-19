@@ -32,12 +32,20 @@ Menu& Menu::setActiveIndex(int index) {
 Menu& Menu::addButton(const Button& button) {
   buttons.push_back(button);
   menu_objects.push_back(&buttons.back());
+  if(menu_objects.size()==1) {
+      setActiveIndex(0);
+  }
+  buttons.back().setPos((left_top.first+right_bottom.first-button.width())/2,button.posY());
   return *this;
 }
 
 Menu& Menu::addLabel(const Label& label) {
   labels.push_back(label);
   menu_objects.push_back(&labels.back());
+  if(menu_objects.size()==1) {
+      setActiveIndex(0);
+  }
+  labels.back().setPos((left_top.first+right_bottom.first-label.width())/2,label.posY());
   return *this;
 }
 
@@ -91,6 +99,14 @@ void Menu::draw() const {
   for(auto o: menu_objects) {
     o->draw();
   }
+//  int xx = (left_top.first+right_bottom.first-labels.front().width())/2;
+//  glColor4f(1,0,0,0.5);
+//  glBegin(GL_QUADS);
+//    glVertex2d(xx,left_top.second);
+//    glVertex2d(xx+labels.front().width(),left_top.second);
+//    glVertex2d(xx+labels.front().width(),left_top.second+50);
+//    glVertex2d(xx,left_top.second+50);
+//  glEnd();
 }
 
 void Menu::click(int x, int y) {

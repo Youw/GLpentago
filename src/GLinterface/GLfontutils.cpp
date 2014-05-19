@@ -1,13 +1,15 @@
 #include "GLfontutils.h"
 
+#include <vector>
+#include <unordered_map>
+
 #include <cmath>
 #include <iostream>
-#include <QHash>
+
 #include <QSysInfo>
 #include <QPainter>
 #include <QPixmap>
 #include <QGLFormat>
-//#include <QtOpenGL/QGLFramebufferObject>
 
 namespace
 {
@@ -16,8 +18,8 @@ namespace
     struct CharData
     {
         GLuint textureId;
-        uint width;
-        uint height;
+        GLsizei width;
+        GLsizei height;
         GLfloat s[2];
         GLfloat t[2];
     };
@@ -28,10 +30,10 @@ namespace
 namespace glutils
 {
 
-struct TextPrivate
+struct GLfontImpl
 {
-    TextPrivate(const QFont &f);
-    ~TextPrivate();
+    GLfontImpl(const QFont &f);
+    ~GLfontImpl();
 
     void allocateTexture();
     CharData &createCharacter(QChar c);
@@ -39,25 +41,25 @@ struct TextPrivate
     QFont font;
     QFontMetrics fontMetrics;
 
-    QHash<ushort, CharData> characters;
-    QList<GLuint> textures;
+    std::unordered_map<ushort, CharData> characters;
+    std::vector<GLuint> textures;
 
     GLint xOffset;
     GLint yOffset;
 };
 
-TextPrivate::TextPrivate(const QFont &f)
+GLfontImpl::GLfontImpl(const QFont &f)
     : font(f), fontMetrics(f), xOffset(0), yOffset(0)
 {
 }
 
-TextPrivate::~TextPrivate()
+GLfontImpl::~GLfontImpl()
 {
-    foreach (GLuint texture, textures)
-        glDeleteTextures(1, &texture);
+    if(!textures.empty())
+        glDeleteTextures(textures.size(), textures.data());
 }
 
-void TextPrivate::allocateTexture()
+void GLfontImpl::allocateTexture()
 {
     GLuint texture;
     glGenTextures(1, &texture);
@@ -71,19 +73,19 @@ void TextPrivate::allocateTexture()
     glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, TEXTURE_SIZE, TEXTURE_SIZE,
                  0, GL_RGBA, GL_UNSIGNED_BYTE, image.bits());
 
-    textures += texture;
+    textures.push_back(texture);
 }
 
-CharData &TextPrivate::createCharacter(QChar c)
+CharData &GLfontImpl::createCharacter(QChar c)
 {
     ushort unicodeC = c.unicode();
-    if (characters.contains(unicodeC))
+    if (characters.find(unicodeC)!=characters.end())
         return characters[unicodeC];
 
     if (textures.empty())
         allocateTexture();
 
-    GLuint texture = textures.last();
+    GLuint texture = textures.back();
 
     GLsizei width = fontMetrics.width(c);
     GLsizei height = fontMetrics.height();
@@ -129,7 +131,7 @@ CharData &TextPrivate::createCharacter(QChar c)
     return character;
 }
 
-GLfont::GLfont(const QFont &f) : d(new TextPrivate(f))
+GLfont::GLfont(const QFont &f) : d(new GLfontImpl(f))
 {
 }
 
@@ -154,18 +156,20 @@ void GLfont::renderText(float x, float y, const QString &text)
     // If the current context's device is not active for painting, the
     // texture generation does not work. This may be specific to the way
     // MIFit is setup.
+
+    //tested on QT 5.2, and this check is not working
 //    if (!QGLContext::currentContext()->device()->paintingActive())
 //        return;
 
-//    glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT | GL_TEXTURE_BIT);
-//
-//    glEnable(GL_TEXTURE_2D);
-//    glEnable(GL_BLEND);
-//    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT | GL_TEXTURE_BIT);
+
+    glEnable(GL_TEXTURE_2D);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     glPushMatrix();
     GLuint texture = 0;
-    glTranslatef(x, y-fontMetrics().ascent(), 0);
+    glTranslatef(x, y, 0);
     for (int i = 0; i < text.length(); ++i)
     {
         CharData &c = d->createCharacter(text[i]);
@@ -196,7 +200,7 @@ void GLfont::renderText(float x, float y, const QString &text)
     }
 
     glPopMatrix();
-//    glPopAttrib();
+    glPopAttrib();
 }
 
 } // namespace glutils

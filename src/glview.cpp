@@ -37,20 +37,20 @@ void GLview::buildMenus() {
   main_menu.setSize(624,724);
   main_menu
       .setTexture(Texture2D(":/graphics/dots.png",this->context()))
-      .addButton(Button(256,206,512,100,"New game",button_texture).setClickCallBack(
+      .addButton(Button(0,206,512,100,"New game",button_texture).setClickCallBack(
                    [&]() {
                        this->goToMenu(menu_new_game);
                    }))
-      .addButton(Button(256,316,512,100,"Load game",button_texture).setClickCallBack(
+      .addButton(Button(0,316,512,100,"Load game",button_texture).setClickCallBack(
                    [&]() {
                        this->goToMenu(menu_load_game);
                    }))
-      .addButton(Button(256,426,512,100,"Join game",button_texture).setClickCallBack(
+      .addButton(Button(0,426,512,100,"Join game",button_texture).setClickCallBack(
                    [&]() {
                        this->goToMenu(menu_join_game);
                    }))
-      .addButton(Button(256,536,512,100,"Host game",button_texture))
-      .addButton(Button(256,746,512,100,"Exit",button_texture).setClickCallBack(
+      .addButton(Button(0,536,512,100,"Host game",button_texture))
+      .addButton(Button(0,746,512,100,"Exit",button_texture).setClickCallBack(
                    [&]() {
                        this->close();
                      }));
@@ -59,9 +59,9 @@ void GLview::buildMenus() {
   menu_new_game.setSize(624,504);
   menu_new_game
       .setTexture(Texture2D(":/graphics/dots.png",this->context()))
-      .addButton(Button(256,311,512,100,"New game",button_texture))
-      .addButton(Button(256,421,512,100,"Load game",button_texture))
-      .addButton(Button(256,631,512,100,"Back",button_texture).setClickCallBack(
+      .addButton(Button(0,311,512,100,"One player",button_texture))
+      .addButton(Button(0,421,512,100,"Two players",button_texture))
+      .addButton(Button(0,631,512,100,"Back",button_texture).setClickCallBack(
                    [&]() {
                        this->goMenuBack();
                      }));
@@ -70,9 +70,8 @@ void GLview::buildMenus() {
   menu_load_game.setSize(624,504);
   menu_load_game
       .setTexture(Texture2D(":/graphics/dots.png",this->context()))
-      .addButton(Button(256,311,512,100,"Autosave",button_texture))
-     // .addButton(Button(256,421,512,100,"Load game",button_texture))
-      .addButton(Button(256,631,512,100,"Back",button_texture).setClickCallBack(
+      .addButton(Button(0,311,512,100,"Autosave",button_texture))
+      .addButton(Button(0,631,512,100,"Back",button_texture).setClickCallBack(
                    [&]() {
                        this->goMenuBack();
                      }));
@@ -81,9 +80,11 @@ void GLview::buildMenus() {
   menu_join_game.setSize(624,504);
   menu_join_game
       .setTexture(Texture2D(":/graphics/dots.png",this->context()))
-      .addLabel(Label("Enter Host IP:",300,311, QFont("Snap ITC", 40, 40, false)).setFontColor4d(0.5,0.5,0.5,1))
-      .addButton(Button(256,431,512,100,"Connect",button_texture))
-      .addButton(Button(256,631,512,100,"Back",button_texture).setClickCallBack(
+      .addLabel(Label("Enter Host IP:",0,280, QFont("Snap ITC", 32, 40, false))
+                .setBackground(Texture2D(":/graphics/screwed_background.jpg",this->context()))
+                )
+      .addButton(Button(0,431,512,100,"Connect",button_texture))
+      .addButton(Button(0,631,512,100,"Back",button_texture).setClickCallBack(
                    [&]() {
                        this->goMenuBack();
                      }));

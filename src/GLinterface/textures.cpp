@@ -44,11 +44,8 @@ namespace Textures2DHolder {
   }
 }
 
-Texture2D::Texture2D(): cxt(nullptr) {
-
-}
-
-Texture2D::Texture2D(const string& filename, Tcontext* cxt): cxt(0) {
+Texture2D::Texture2D(const string& filename, Tcontext* cxt): cxt(nullptr),
+    crop_lt(0,1), crop_rt(1,1), crop_rb(1,0), crop_lb(0,0) {
   load(filename, cxt);
 }
 
@@ -56,7 +53,8 @@ Texture2D::~Texture2D() {
   release();
 }
 
-Texture2D::Texture2D(const Texture2D& right): cxt(0) {
+Texture2D::Texture2D(const Texture2D& right): cxt(nullptr),
+    crop_lt(0,1), crop_rt(1,1), crop_rb(1,0), crop_lb(0,0){
   load(right.filename,right.cxt);
 }
 
@@ -90,27 +88,44 @@ void Texture2D::release() {
 }
 
 void Texture2D::draw(const point& left_top) const {
-  draw(left_top,{left_top.x()+width(),left_top.y()+height()});
+  draw(left_top,{left_top.x+width(),left_top.y+height()});
 }
 
 void Texture2D::draw(const point& left_top,const point& right_bottom) const {
   draw(left_top,
-        {right_bottom.x(), left_top.y()},
+        {right_bottom.x, left_top.y},
         right_bottom,
-        {left_top.x(), right_bottom.y()});
+        {left_top.x, right_bottom.y});
 }
 
 void Texture2D::draw(const point& left_top,
            const point& right_top,
            const point& right_bottom,
            const point& left_bottom) const {
-//  glEnable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, info.texture);
   glBegin(GL_QUADS);
-    glTexCoord2i(0, 1); glVertex2d(left_top.x(), left_top.y());
-    glTexCoord2i(1, 1); glVertex2d(right_top.x(), right_top.y());
-    glTexCoord2i(1, 0); glVertex2d(right_bottom.x(), right_bottom.y());
-    glTexCoord2i(0, 0); glVertex2d(left_bottom.x(), left_bottom.y());
+    glTexCoord2i(crop_lt.x, crop_lt.y); glVertex2d(left_top.x, left_top.y);
+    glTexCoord2i(crop_rt.x, crop_rt.y); glVertex2d(right_top.x, right_top.y);
+    glTexCoord2i(crop_rb.x, crop_rb.y); glVertex2d(right_bottom.x, right_bottom.y);
+    glTexCoord2i(crop_lb.x, crop_lb.y); glVertex2d(left_bottom.x, left_bottom.y);
   glEnd();
-//  glDisable(GL_TEXTURE_2D);
+}
+
+//Texture2D& Texture2D::setRepeatScale(float x_sc, float y_sc) {
+//  return *this;
+//}
+
+Texture2D& Texture2D::setCropRegion(
+        const point& left_top,const point& right_top,
+        const point& right_bottom, const point& left_bottom) {
+    crop_lt.x = double(info.width)/left_top.x;
+    crop_rt.x = double(info.width)/right_top.x;
+    crop_rb.x = double(info.width)/right_bottom.x;
+    crop_lb.x = double(info.width)/left_bottom.x;
+
+    crop_lt.y = double(info.height)/left_top.y;
+    crop_rt.y = double(info.height)/right_top.y;
+    crop_rb.y = double(info.height)/right_bottom.y;
+    crop_lb.y = double(info.height)/left_bottom.y;
+    return *this;
 }

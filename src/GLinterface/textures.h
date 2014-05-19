@@ -5,11 +5,17 @@
 //QT staff
 #include <QString>
 #include <QGLContext>
-#include <QPoint>
 typedef QString string;
 typedef QGLContext Tcontext;
-typedef QPoint point;
 //
+
+template<typename T>
+struct point_base {
+    T x,y;
+    point_base(T x = 0, T y = 0): x(x), y(y) {}
+};
+
+typedef point_base<GLint> point;
 
 struct Texture2DInfo {
   GLint texture;
@@ -23,11 +29,13 @@ class Texture2D
   Texture2DInfo info;
   string filename;
   Tcontext* cxt;
+//  float scale_x, scale_y;
+  point_base<GLdouble> crop_lt, crop_rt, crop_rb, crop_lb;
 public:
 
-  Texture2D();
   //construct and load texture from file
-  Texture2D(const string& filename, Tcontext* cxt);
+  // "" - means empty texture
+  Texture2D(const string& filename = "", Tcontext* cxt = nullptr);
   ~Texture2D();
 
   Texture2D(const Texture2D& right);
@@ -61,6 +69,16 @@ public:
              const point& right_top,
              const point& right_bottom,
              const point& left_bottom) const;
+
+  //if texture is repeatable pattern,
+  //scale must be setted, otherwise - zero (by default)
+  //1,1 - means keep original texture size
+//  Texture2D& setRepeatScale(float x_sc, float y_sc);
+
+  //if texture must be drawn cropped
+  Texture2D& setCropRegion(
+          const point& left_top,const point& right_top,
+          const point& right_bottom, const point& left_bottom);
 };
 
 #endif // TEXTURES_H

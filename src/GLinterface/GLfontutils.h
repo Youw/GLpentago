@@ -11,13 +11,13 @@ class QString;
 namespace glutils
 {
 
-class TextPrivate;
+class GLfontImpl;
 
-class GLfont
+class GLfont final
 {
 public:
     GLfont(const QFont &f);
-    virtual ~GLfont();
+    ~GLfont();
 
     const QFont& font() const;
     const QFontMetrics& fontMetrics() const;
@@ -28,7 +28,7 @@ public:
 private:
     Q_DISABLE_COPY(GLfont)
 
-    TextPrivate *const d;
+    GLfontImpl *const d;
 };
 
 } // namespace opengl

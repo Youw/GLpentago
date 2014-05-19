@@ -6,33 +6,25 @@
 #include "GLfontutils.h"
 
 #include "memory"
+#include "fontkeeper.h"
 
-class QGLWidget;
-
-class Label: public RenderObject
+class Label: public RenderObject, public FontKeeper<Label>
 {
 public:
 
-  //x_pos and y_pos - coordinates of base line of first character
   Label(const string& text = "label",
-        int x= 0,
-        int y= 0,
+        int x_left_top = 0,
+        int y_left_top = 0,
         const QFont& font = QFont());
 
   Label& setText(const string& text);
   const string& getText() const { return text; }
 
-  //width of text according to Font
-  int width() const { return text_width; }
-  //offset of strike out relative to baseline
-  int strikeOutPos() const { return strike_out_pos; }
+  //width and height of text according to Font
+  virtual int width() const override;
+  virtual int height() const override;
 
-  Label& setFont(const QFont& font);
-  const QFont& getFont() const { return text_font->font(); }
-
-  const GLint* getFontColor() const { return color; }
-
-
+  Label& setBackground(const Texture2D& texture);
 
   virtual void draw() const override;
 //  virtual void click() override;
@@ -44,15 +36,16 @@ public:
 
   //set and get position of baseline
   virtual void setPos(int x, int y) override;
-  virtual int posX() const override { return pos_x; }
-  virtual int posY() const override { return pos_y; }
+  virtual int posX() const override;
+  virtual int posY() const override;
+
+protected:
+  virtual void fontChanged() override;
 private:
-  std::shared_ptr<glutils::GLfont> text_font;
+  Texture2D backgound;
   string text;
+  int x_pos, y_pos;
   int text_width;
-  int strike_out_pos;
-  int pos_x, pos_y;
-  GLint color[4];
 };
 
 #endif // LABEL_H

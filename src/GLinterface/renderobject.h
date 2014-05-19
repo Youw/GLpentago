@@ -28,6 +28,8 @@ public:
   virtual void setPos(int x, int y) = 0;
   virtual int posX() const = 0;
   virtual int posY() const = 0;
+  virtual int height() const = 0;
+  virtual int width() const = 0;
 
   virtual void keyPress(int key, bool repeat, KeyboardModifier mod) { (void)repeat;(void)key;(void)mod; }
   virtual void keyRelease(int key, KeyboardModifier mod) { (void)key;(void)mod; }

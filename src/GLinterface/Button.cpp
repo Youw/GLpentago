@@ -12,15 +12,17 @@ Button::Button(
                int width,
                int height,
                const string& caption,
-               const Texture2D& texture): active(false), pressed(false) {
+               const Texture2D& texture):
+    text(caption),
+    active(false),
+    pressed(false),
+    alpha_color_bak(INT_MAX) {
 
   setPos(x_left_top, y_left_top);
-  QFont font = QFont("Snap ITC", height/2, 40, false);
-  setFont(font);
   setFontColor4d(0.0,0.0,0.0,1.0);
   setSize(width,height);
   setTexture(texture);
-  setCaption(caption);
+  setFont(QFont("Snap ITC", height/2, 40, false));
 }
 
 Button& Button::setTexture(const Texture2D& texture) {
@@ -49,50 +51,38 @@ Button& Button::setSize(int width, int height) {
   return *this;
 }
 
+
+//From FontFeeperBase<Button>
+//
 Button& Button::setFont(const QFont& font) {
-  text.setFont(font);
-  return *this;
+    text.setFont(font);
+    resetTextPos();
+    return *this;
 }
 
-Button& Button::resetTextPos() {
+const QFont& Button::getFont() const {
+    return text.getFont();
+}
+
+Button& Button::setFontColor4i(GLint red, GLint green, GLint blue, GLint alpha) {
+    alpha_color_bak = alpha;
+    text.setFontColor4i(red,green,blue,alpha);
+    return *this;
+}
+
+const GLint* Button::getFontColor() const {
+    return text.getFontColor();
+}
+//
+//
+
+void Button::resetTextPos() {
   //allign center:
+  //TODO: make possible allign left or right
   text.setPos((left_top.first+right_bottom.first-text.width())/2,
-              (left_top.second+right_bottom.second)/2+text.strikeOutPos());
-  return *this;
-}
+              (left_top.second+right_bottom.second-text.height())/2);
+//    text.setPos(left_top.first,right_bottom.second);
 
-Button& Button::setFontColor4iv(const GLint* rgba) {
-  font_color[0] = rgba[0];
-  font_color[1] = rgba[1];
-  font_color[2] = rgba[2];
-  font_color[3] = rgba[3];
-  text.setFontColor4iv(font_color);
-  return *this;
-}
-
-Button& Button::setFontColor4i(GLint red,
-                         GLint green,
-                         GLint blue,
-                         GLint alpha) {
-  font_color[0] = red;
-  font_color[1] = green;
-  font_color[2] = blue;
-  font_color[3] = alpha;
-  text.setFontColor4iv(font_color);
-  return *this;
-}
-
-Button& Button::setFontColor4d(GLdouble red,
-                         GLdouble green,
-                         GLdouble blue,
-                         GLdouble alpha) {
-  GLint int_max = std::numeric_limits<GLint>::max();
-  setFontColor4i(
-        GLint(int_max*red),
-        GLint(int_max*green),
-        GLint(int_max*blue),
-        GLint(int_max*alpha));
-  return *this;
 }
 
 void Button::setActive(bool active) {
@@ -101,10 +91,13 @@ void Button::setActive(bool active) {
 
 Button& Button::setPressed(bool pressed) {
   this->pressed = pressed;
-  if (pressed)
-    text.setFontColor4d(font_color[0],font_color[1],font_color[2],0.7);
+  const GLint* color = text.getFontColor();
+  if (pressed) {
+    alpha_color_bak = color[3];
+    text.setFontColor4d(color[0],color[1],color[2],0.7);
+  }
   else
-    text.setFontColor4iv(font_color);
+    text.setFontColor4i(color[0],color[1],color[2],alpha_color_bak);
   return *this;
 }
 
@@ -176,6 +169,9 @@ bool Button::underMouse(int x, int y) const {
 }
 
 void Button::setPos(int x, int y) {
+  right_bottom.first+=x-left_top.first;
+  right_bottom.second+=y-left_top.second;
   left_top.first = x;
   left_top.second = y;
+  resetTextPos();
 }
