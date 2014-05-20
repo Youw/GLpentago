@@ -59,6 +59,8 @@ public:
   virtual int height() const override { return right_bottom.second-left_top.second; }
   virtual int width() const override { return right_bottom.first-left_top.first; }
 
+  virtual void keyPress(int key, bool repeat, KeyboardModifier mod) override;
+  virtual void keyRelease(int key, KeyboardModifier mod) override;
 
   static Texture2D texture_blurr;
 

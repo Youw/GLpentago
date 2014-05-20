@@ -37,20 +37,20 @@ void GLview::buildMenus() {
   main_menu.setSize(624,724);
   main_menu
       .setTexture(Texture2D(":/graphics/dots.png",this->context()))
-      .addButton(Button(0,206,512,100,"New game",button_texture).setClickCallBack(
+      .addObject(Button(0,206,512,100,"New game",button_texture).setClickCallBack(
                    [&]() {
                        this->goToMenu(menu_new_game);
                    }))
-      .addButton(Button(0,316,512,100,"Load game",button_texture).setClickCallBack(
+      .addObject(Button(0,316,512,100,"Load game",button_texture).setClickCallBack(
                    [&]() {
                        this->goToMenu(menu_load_game);
                    }))
-      .addButton(Button(0,426,512,100,"Join game",button_texture).setClickCallBack(
+      .addObject(Button(0,426,512,100,"Join game",button_texture).setClickCallBack(
                    [&]() {
                        this->goToMenu(menu_join_game);
                    }))
-      .addButton(Button(0,536,512,100,"Host game",button_texture))
-      .addButton(Button(0,746,512,100,"Exit",button_texture).setClickCallBack(
+      .addObject(Button(0,536,512,100,"Host game",button_texture))
+      .addObject(Button(0,746,512,100,"Exit",button_texture).setClickCallBack(
                    [&]() {
                        this->close();
                      }));
@@ -59,9 +59,9 @@ void GLview::buildMenus() {
   menu_new_game.setSize(624,504);
   menu_new_game
       .setTexture(Texture2D(":/graphics/dots.png",this->context()))
-      .addButton(Button(0,311,512,100,"One player",button_texture))
-      .addButton(Button(0,421,512,100,"Two players",button_texture))
-      .addButton(Button(0,631,512,100,"Back",button_texture).setClickCallBack(
+      .addObject(Button(0,311,512,100,"One player",button_texture))
+      .addObject(Button(0,421,512,100,"Two players",button_texture))
+      .addObject(Button(0,631,512,100,"Back",button_texture).setClickCallBack(
                    [&]() {
                        this->goMenuBack();
                      }));
@@ -70,8 +70,8 @@ void GLview::buildMenus() {
   menu_load_game.setSize(624,504);
   menu_load_game
       .setTexture(Texture2D(":/graphics/dots.png",this->context()))
-      .addButton(Button(0,311,512,100,"Autosave",button_texture))
-      .addButton(Button(0,631,512,100,"Back",button_texture).setClickCallBack(
+      .addObject(Button(0,311,512,100,"Autosave",button_texture))
+      .addObject(Button(0,631,512,100,"Back",button_texture).setClickCallBack(
                    [&]() {
                        this->goMenuBack();
                      }));
@@ -80,11 +80,11 @@ void GLview::buildMenus() {
   menu_join_game.setSize(624,504);
   menu_join_game
       .setTexture(Texture2D(":/graphics/dots.png",this->context()))
-      .addLabel(Label("Enter Host IP:",0,280, QFont("Snap ITC", 32, 40, false))
+      .addObject(Label("Enter Host IP:",0,280, QFont("Snap ITC", 32, 40, false))
                 .setBackground(Texture2D(":/graphics/screwed_background.jpg",this->context()))
                 )
-      .addButton(Button(0,431,512,100,"Connect",button_texture))
-      .addButton(Button(0,631,512,100,"Back",button_texture).setClickCallBack(
+      .addObject(Button(0,431,512,100,"Connect",button_texture))
+      .addObject(Button(0,631,512,100,"Back",button_texture).setClickCallBack(
                    [&]() {
                        this->goMenuBack();
                      }));
@@ -143,16 +143,16 @@ void GLview::paintGL() {
   glClear(GL_COLOR_BUFFER_BIT); // чистим буфер
   drawBackground(menu_background_texture);
 
-  glBegin(GL_POLYGON);
-    glColor4f(1,0,0, 0.25);
-    glVertex2f(0, 0);
-    glColor4f(0,1,0, 1);
-    glVertex2f(512, 0);
-    glColor4f(0,0,1, 0.25);
-    glVertex2f(1024, 1024);
-    glColor4f(0,1,0, 1);
-    glVertex2f(0, 512);
-  glEnd();
+//  glBegin(GL_POLYGON);
+//    glColor4f(1,0,0, 0.25);
+//    glVertex2f(0, 0);
+//    glColor4f(0,1,0, 1);
+//    glVertex2f(512, 0);
+//    glColor4f(0,0,1, 0.25);
+//    glVertex2f(1024, 1024);
+//    glColor4f(0,1,0, 1);
+//    glVertex2f(0, 512);
+//  glEnd();
 
   glColor3f(1,1,1);
 
@@ -261,34 +261,48 @@ void GLview::leaveEvent(QEvent * event) {
     o->mouseUp(INT_MAX,INT_MAX);
   }
   updateGL();
-  event->accept();
+  (void)event;
 }
+
+
 
 void GLview::keyPressEvent(QKeyEvent * e)
 {
+  for(auto o: current_objects) {
+    if (o->isActive()) {
+      o->keyPress(e->key(),e->isAutoRepeat(),KeyboardModifier(int(e->modifiers())));
+      if(e->text().length()!=0)
+        o->charInput(e->text()[0].unicode());
+    }
+  }
   glMatrixMode( GL_PROJECTION );
 #ifdef QT_DEBUG
     if(e->key() == Qt::Key_T) {
       glRotatef(angle+0.1*(count/10), 1,1,0);
       count++;
-      updateGL();
     }
     if(e->key() == Qt::Key_Y) {
       count=0;
-      updateGL();
     }
 #endif
     if(e->key() == Qt::Key_A) {
       glRotatef(0.5, 1,0,0);
-      updateGL();
     }
     if(e->key() == Qt::Key_Z) {
       glRotatef(0.5, 0,1,0);
-      updateGL();
     }
     if(e->key() == Qt::Key_Q) {
       glRotatef(0.5, 0,0,1);
-      updateGL();
     }
     glMatrixMode( GL_MODELVIEW );
+    updateGL();
 }
+
+void GLview::keyReleaseEvent(QKeyEvent * e) {
+    for(auto o: current_objects) {
+      if (o->isActive())
+        o->keyRelease(e->key(),KeyboardModifier(int(e->modifiers())));
+    }
+    updateGL();
+}
+

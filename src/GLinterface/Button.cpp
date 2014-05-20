@@ -90,14 +90,16 @@ void Button::setActive(bool active) {
 }
 
 Button& Button::setPressed(bool pressed) {
-  this->pressed = pressed;
-  const GLint* color = text.getFontColor();
-  if (pressed) {
-    alpha_color_bak = color[3];
-    text.setFontColor4d(color[0],color[1],color[2],0.7);
+  if(this->pressed!=pressed) {
+    this->pressed = pressed;
+    const GLint* color = text.getFontColor();
+    if (pressed) {
+      alpha_color_bak = color[3];
+      text.setFontColor4d(color[0],color[1],color[2],0.7);
+    }
+    else
+      text.setFontColor4i(color[0],color[1],color[2],alpha_color_bak);
   }
-  else
-    text.setFontColor4i(color[0],color[1],color[2],alpha_color_bak);
   return *this;
 }
 
@@ -174,4 +176,20 @@ void Button::setPos(int x, int y) {
   left_top.first = x;
   left_top.second = y;
   resetTextPos();
+}
+
+void Button::keyPress(int key, bool repeat, KeyboardModifier mod) {
+  (void)repeat;
+  if((mod==MD_NONE) && (key==Qt::Key_Return)) {
+    mouseDown((left_top.first+right_bottom.first)/2,
+              (left_top.second+right_bottom.second)/2);
+  }
+}
+
+void Button::keyRelease(int key, KeyboardModifier mod) {
+  (void)mod;
+  if(key==Qt::Key_Return) {
+    mouseUp((left_top.first+right_bottom.first)/2,
+            (left_top.second+right_bottom.second)/2);
+  }
 }

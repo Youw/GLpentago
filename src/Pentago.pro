@@ -18,7 +18,8 @@ SOURCES += main.cpp\
     GLinterface/button.cpp \
     GLinterface/label.cpp \
     GLinterface/GLfontutils.cpp \
-    GLinterface/menu.cpp
+    GLinterface/menu.cpp \
+    GLinterface/textedit.cpp
 
 
 HEADERS  += glview.h \
@@ -29,9 +30,12 @@ HEADERS  += glview.h \
     GLinterface/GLfontutils.h \
     GLinterface/menu.h \
     GLinterface/fontkeeper.h \
-    GLinterface/fontkeeperbase.h
+    GLinterface/fontkeeperbase.h \
+    GLinterface/textedit.h
 
 RESOURCES += \
     GLinterface/GLgraphics.qrc
 
 CONFIG += c++11
+
+OTHER_FILES +=

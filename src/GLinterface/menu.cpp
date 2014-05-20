@@ -1,10 +1,11 @@
 #include "menu.h"
+#include <type_traits>
 
 Menu::Menu(int x_left_top,
            int y_left_top,
            int width,
            int height,
-           const Texture2D& texture): now_active(0) {
+           const Texture2D& texture): active_index(0), active(true) {
   setPos(x_left_top,y_left_top);
   setSize(width, height);
   setTexture(texture);
@@ -23,29 +24,10 @@ Menu& Menu::setTexture(const Texture2D &texture) {
 
 Menu& Menu::setActiveIndex(int index) {
   if(menu_objects[index]->canBeActive()) {
+    menu_objects[active_index]->setActive(false);
     menu_objects[index]->setActive(true);
-    now_active = index;
+    active_index = index;
   }
-  return *this;
-}
-
-Menu& Menu::addButton(const Button& button) {
-  buttons.push_back(button);
-  menu_objects.push_back(&buttons.back());
-  if(menu_objects.size()==1) {
-      setActiveIndex(0);
-  }
-  buttons.back().setPos((left_top.first+right_bottom.first-button.width())/2,button.posY());
-  return *this;
-}
-
-Menu& Menu::addLabel(const Label& label) {
-  labels.push_back(label);
-  menu_objects.push_back(&labels.back());
-  if(menu_objects.size()==1) {
-      setActiveIndex(0);
-  }
-  labels.back().setPos((left_top.first+right_bottom.first-label.width())/2,label.posY());
   return *this;
 }
 
@@ -134,9 +116,9 @@ void Menu::hover(int x, int y) {
   for(size_t i=0; i<menu_objects.size(); i++) {
     if (menu_objects[i]->underMouse(x,y)) {
       menu_objects[i]->hover(x,y);
-      if(now_active!=i && menu_objects[i]->isActive()) {
-        menu_objects[now_active]->setActive(false);
-        now_active = i;
+      if(active_index!=i && menu_objects[i]->isActive()) {
+        menu_objects[active_index]->setActive(false);
+        active_index = i;
       }
     }
   }
@@ -156,6 +138,59 @@ void Menu::setPos(int x, int y) {
   left_top.second = y;
 }
 
-void Menu::keyPress(int key, bool repeat, KeyboardModifier mod) {
-  repeat = key==mod && repeat;
+static bool isActive(const std::shared_ptr<RenderObject>& o) {
+    return o->isActive();
 }
+
+void Menu::keyPress(int key, bool repeat, KeyboardModifier mod) {
+  if (key==Qt::Key_Tab) key = Qt::Key_Down; else
+  //Shift+Tab
+  if (key==Qt::Key_Backtab) key = Qt::Key_Up;
+  unsigned find_count = menu_objects.size();
+  if(!find_count) return;
+  switch (key) {
+    unsigned index;
+    case Qt::Key_Down:
+      index = active_index;
+      do {
+        if (index==menu_objects.size()-1)
+          index=0;
+        else
+          index++;
+        find_count--;
+      } while(find_count && !(menu_objects[index]->canBeActive()));
+      setActiveIndex(index);
+      break;
+    case Qt::Key_Up:
+      find_count = menu_objects.size();
+      index = active_index;
+      do {
+        if (index==0)
+          index=menu_objects.size()-1;
+        else
+          index--;
+        find_count--;
+      } while(find_count && !(menu_objects[index]->canBeActive()));
+      setActiveIndex(index);
+      break;
+    case Qt::Key_Escape: {
+      auto o = menu_objects.back();
+      o->click(o->posX()+o->width()/2,o->posY()+o->height()/2);
+      break;
+    }
+    default:
+      auto it = std::find_if(menu_objects.begin(),menu_objects.end(),::isActive);
+      if (it!=menu_objects.end()) (*it)->keyPress(key,repeat,mod);
+  }
+}
+
+void Menu::keyRelease(int key, KeyboardModifier mod) {
+  auto it = std::find_if(menu_objects.begin(),menu_objects.end(),::isActive);
+  if (it!=menu_objects.end()) (*it)->keyRelease(key,mod);
+}
+
+void Menu::charInput(int unicode_key) {
+    auto it = std::find_if(menu_objects.begin(),menu_objects.end(),::isActive);
+    if (it!=menu_objects.end()) (*it)->charInput(unicode_key);
+}
+

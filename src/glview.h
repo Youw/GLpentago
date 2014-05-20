@@ -21,6 +21,8 @@ protected:
     void drawBackground(Texture2D& texture);
 
     virtual void keyPressEvent(QKeyEvent * e) override;
+    virtual void keyReleaseEvent(QKeyEvent * e) override;
+
     virtual void mousePressEvent ( QMouseEvent * event ) override;
     virtual void mouseReleaseEvent( QMouseEvent * event ) override;
     virtual void mouseDoubleClickEvent ( QMouseEvent * event ) override;

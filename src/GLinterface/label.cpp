@@ -13,8 +13,9 @@ Label& Label::setText(const string& text) {
 }
 
 Label& Label::setBackground(const Texture2D& texture) {
+    x_pos-=(backgound?getFontMetrics().averageCharWidth():0);
     backgound = texture;
-    fontChanged();
+    x_pos+=(backgound?getFontMetrics().averageCharWidth():0);
     return *this;
 }
 
