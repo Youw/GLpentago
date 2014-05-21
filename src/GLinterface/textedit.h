@@ -1,7 +1,9 @@
 #ifndef TEXTEDIT_H
 #define TEXTEDIT_H
 
-class TextEdit
+#include "renderobject.h"
+
+class TextEdit : public RenderObject
 {
 public:
     TextEdit();

@@ -2,7 +2,10 @@
 #define FONTKEEPERBASE_H
 
 #include <QFont>
-#include "GL/gl.h"
+
+//#include "GL/gl.h"
+#include <QtOpenGL>
+
 #include "climits"
 
 template<typename Keeper>

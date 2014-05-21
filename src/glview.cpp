@@ -3,7 +3,9 @@
 #include <QtOpenGL>
 #include <QDebug>
 #include <climits>
+
 #include "GL/glu.h"
+//#include <GLES/gl.h>
 
 GLview::GLview(QWidget *parent)
     : QGLWidget(parent)
@@ -139,7 +141,7 @@ void GLview::resizeGL(int w, int h) {
 }
 
 void GLview::paintGL() {
-  glColor3f(1,1,1);
+  glColor4f(1,1,1,1);
   glClear(GL_COLOR_BUFFER_BIT); // чистим буфер
   drawBackground(menu_background_texture);
 
@@ -154,7 +156,7 @@ void GLview::paintGL() {
 //    glVertex2f(0, 512);
 //  glEnd();
 
-  glColor3f(1,1,1);
+  //glColor3(1,1,1);
 
   for(auto o: current_objects) {
     o->draw();
@@ -164,7 +166,7 @@ void GLview::paintGL() {
   renderText(100,100,0.0,QString("Press and hold T or press Y %1").arg(count));
 #endif
 
-  glColor3f(0.15,0.63,0.02);
+  glColor4f(0.15,0.63,0.02,1);
   renderText(20,20,QString("Mouse pos: X:%1 Y:%2").arg(m_x).arg(m_y));
   renderText(20,40,QString("Mouse world pos:"));
   renderText(20,50,QString("X:%1").arg(m_w.x));
@@ -197,15 +199,15 @@ GLview::Point3D GLview::unProject(int x, int y) {
 	GLfloat winX, winY, winZ;
 	GLdouble posX, posY, posZ;
 
-	glGetDoublev(GL_MODELVIEW_MATRIX, modelview);
-	glGetDoublev(GL_PROJECTION_MATRIX, projection);
+    glGetDoublev(GL_MODELVIEW_MATRIX, modelview);
+    glGetDoublev(GL_PROJECTION_MATRIX, projection);
 	glGetIntegerv(GL_VIEWPORT, viewport);
 
 	winX = x;
 	winY = (float)viewport[3] - (float)y;
 	glReadPixels(x, int(winY), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &winZ);
 
-	gluUnProject(winX, winY, winZ, modelview, projection, viewport, &posX, &posY, &posZ);
+    gluUnProject(winX, winY, winZ, modelview, projection, viewport, &posX, &posY, &posZ);
 
 	return { posX, posY, posZ };
 }

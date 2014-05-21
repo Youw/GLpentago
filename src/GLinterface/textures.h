@@ -1,6 +1,8 @@
 #ifndef TEXTURES_H
 #define TEXTURES_H
-#include <GL/gl.h>
+
+//#include <GL/gl.h>
+#include <QtOpenGL>
 
 //QT staff
 #include <QString>
