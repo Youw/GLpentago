@@ -7,10 +7,10 @@
 Texture2D Button::texture_blurr;
 
 Button::Button(
-               int x_left_top,
-               int y_left_top,
-               int width,
-               int height,
+               GLint x_left_top,
+               GLint y_left_top,
+               GLint width,
+               GLint height,
                const string& caption,
                const Texture2D& texture):
     text(caption),
@@ -18,8 +18,8 @@ Button::Button(
     pressed(false),
     alpha_color_bak(INT_MAX) {
 
-  setPos(x_left_top, y_left_top);
   setFontColor4d(0.0,0.0,0.0,1.0);
+  setPos(x_left_top, y_left_top);
   setSize(width,height);
   setTexture(texture);
   setFont(QFont("Snap ITC", height/2, 40, false));
@@ -41,11 +41,13 @@ Button& Button::setClickCallBack(const std::function<void()>& call_back) {
   return *this;
 }
 
-Button& Button::setSize(int width, int height) {
-  right_bottom.first = left_top.first+width;
-  right_bottom.second = left_top.second+height;
+Button& Button::setSize(GLint width,GLint  height) {
+  pos.setSize(width,height);
   QFont font = text.getFont();
-  font.setPointSize(height==0?1:height<0?-height/2:height/2);
+  height = abs(height);
+  height = std::min(height,150);
+  height /= 2;
+  font.setPointSize(height==0?1:height);
   text.setFont(font);
   resetTextPos();
   return *this;
@@ -79,9 +81,8 @@ const GLint* Button::getFontColor() const {
 void Button::resetTextPos() {
   //allign center:
   //TODO: make possible allign left or right
-  text.setPos((left_top.first+right_bottom.first-text.width())/2,
-              (left_top.second+right_bottom.second-text.height())/2);
-//    text.setPos(left_top.first,right_bottom.second);
+  text.setPos(pos.posXcenter()-text.width()/2,
+              pos.posYcenter()-text.height()/2);
 
 }
 
@@ -106,48 +107,47 @@ Button& Button::setPressed(bool pressed) {
 
 
 void Button::draw() const {
-  int dx = 0;
-  int dy = 0;
+  decltype(pos) work_pos = pos;
+  GLint dx = 0;
+  GLint dy = 0;
   if (active && pressed) {
     glColor4b(50,50,50,70);
-    texture.draw({left_top.first,left_top.second},
-                       {right_bottom.first,left_top.second},
-                       {right_bottom.first,right_bottom.second},
-                       {left_top.first,right_bottom.second});
-    dx = 2;//(right_bottom.first-left_top.first)*0.03;
-    dy = 1;//(right_bottom.second-left_top.second)*0.05;
+    texture.draw(pos.glCoords(),pos.dimension);
+    dx = 2;
+    dy = 1;
   }
   glColor4b(127,127,127,127);//black
-  texture.draw({left_top.first+dx,left_top.second+dy},
-               {right_bottom.first-dx,left_top.second+dy},
-               {right_bottom.first-dx,right_bottom.second-dy},
-               {left_top.first+dx,right_bottom.second-dy});
+  work_pos.setLeft(work_pos.getLeft()+dx);
+  work_pos.setRight(work_pos.getRight()-dx);
+  work_pos.setTop(work_pos.getTop()+dy);
+  work_pos.setBottom(work_pos.getBottom()-dy);
+
+  texture.draw(work_pos.glCoords(),work_pos.dimension);
   if(active | pressed) {
-    dx += (right_bottom.first-left_top.first)*0.03;
+    dx += work_pos.width()*0.03;
+    work_pos.setLeft(work_pos.getLeft()+dx);
+    work_pos.setRight(work_pos.getRight()-dx);
 
     glColor4b(127,127,127,30);//transparent
-    texture_blurr.draw({left_top.first+dx,left_top.second+dy},
-                       {right_bottom.first-dx,left_top.second+dy},
-                       {right_bottom.first-dx,right_bottom.second-dy},
-                       {left_top.first+dx,right_bottom.second-dy});
+    texture_blurr.draw(work_pos.glCoords(),work_pos.dimension);
   }
   text.draw();
 }
 
-void Button::click(int x, int y) {
+void Button::click(GLint x, GLint y) {
   if(click_call_back)
     click_call_back();
   (void)x;
   (void)y;
 }
 
-void Button::mouseDown(int x, int y) {
+void Button::mouseDown(GLint x, GLint y) {
   setPressed(true);
   (void)x;
   (void)y;
 }
 
-void Button::mouseUp(int x, int y) {
+void Button::mouseUp(GLint x, GLint y) {
   if (pressed && underMouse(x,y)) {
     setPressed(false);//order is important
     click(x,y);//
@@ -155,7 +155,7 @@ void Button::mouseUp(int x, int y) {
   setPressed(false);
 }
 
-void Button::hover(int x, int y) {
+void Button::hover(GLint x, GLint y) {
   setActive(true);
   (void)x;
   (void)y;
@@ -165,31 +165,41 @@ void Button::unHover() {
   setActive(false);
 }
 
-bool Button::underMouse(int x, int y) const {
-  return (left_top.first <= x) && (left_top.second <= y) &&
-      (right_bottom.first >= x) && (right_bottom.second >= y);
+bool Button::underMouse(GLint x, GLint y) const {
+  return pos.posInRect(x,y);
 }
 
-void Button::setPos(int x, int y) {
-  right_bottom.first+=x-left_top.first;
-  right_bottom.second+=y-left_top.second;
-  left_top.first = x;
-  left_top.second = y;
+void Button::setPos(GLint x, GLint y) {
+  pos.setPos(x,y);
   resetTextPos();
+}
+
+GLint Button::posX() const {
+  return pos.posX();
+}
+
+GLint Button::posY() const {
+  return pos.posY();
+}
+
+GLint Button::height() const {
+  return pos.height();
+}
+
+GLint Button::width() const {
+  return pos.width();
 }
 
 void Button::keyPress(int key, bool repeat, KeyboardModifier mod) {
   (void)repeat;
   if((mod==MD_NONE) && (key==Qt::Key_Return)) {
-    mouseDown((left_top.first+right_bottom.first)/2,
-              (left_top.second+right_bottom.second)/2);
+    mouseDown(pos.posXcenter(),pos.posYcenter());
   }
 }
 
 void Button::keyRelease(int key, KeyboardModifier mod) {
   (void)mod;
   if(key==Qt::Key_Return) {
-    mouseUp((left_top.first+right_bottom.first)/2,
-            (left_top.second+right_bottom.second)/2);
+    mouseUp(pos.posXcenter(),pos.posYcenter());
   }
 }

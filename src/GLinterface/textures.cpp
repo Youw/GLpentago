@@ -45,7 +45,7 @@ namespace Textures2DHolder {
 }
 
 Texture2D::Texture2D(const string& filename, Tcontext* cxt): cxt(nullptr),
-    crop_lt(0,1), crop_rt(1,1), crop_rb(1,0), crop_lb(0,0) {
+    crop{{0,1},{1,1},{1,0},{0,0}} {
   load(filename, cxt);
 }
 
@@ -54,7 +54,7 @@ Texture2D::~Texture2D() {
 }
 
 Texture2D::Texture2D(const Texture2D& right): cxt(nullptr),
-    crop_lt(0,1), crop_rt(1,1), crop_rb(1,0), crop_lb(0,0){
+    crop{{0,1},{1,1},{1,0},{0,0}} {
   load(right.filename,right.cxt);
 }
 
@@ -102,13 +102,48 @@ void Texture2D::draw(const point& left_top,
            const point& right_top,
            const point& right_bottom,
            const point& left_bottom) const {
+//  glBindTexture(GL_TEXTURE_2D, info.texture);
+//  glBegin(GL_QUADS);
+//    glTexCoord2i(crop_lt.x, crop_lt.y); glVertex2d(left_top.x, left_top.y);
+//    glTexCoord2i(crop_rt.x, crop_rt.y); glVertex2d(right_top.x, right_top.y);
+//    glTexCoord2i(crop_rb.x, crop_rb.y); glVertex2d(right_bottom.x, right_bottom.y);
+//    glTexCoord2i(crop_lb.x, crop_lb.y); glVertex2d(left_bottom.x, left_bottom.y);
+//  glEnd();
+  GLint region[4][2] = {
+    {left_top.x,left_top.y},
+    {right_top.x,right_top.y},
+    {right_bottom.x,right_bottom.y},
+    {left_bottom.x,left_bottom.y}
+  };
+  draw((GLint*)region,2);
+}
+
+void Texture2D::draw(const GLint* pos, int dim) const {
   glBindTexture(GL_TEXTURE_2D, info.texture);
-  glBegin(GL_QUADS);
-    glTexCoord2i(crop_lt.x, crop_lt.y); glVertex2d(left_top.x, left_top.y);
-    glTexCoord2i(crop_rt.x, crop_rt.y); glVertex2d(right_top.x, right_top.y);
-    glTexCoord2i(crop_rb.x, crop_rb.y); glVertex2d(right_bottom.x, right_bottom.y);
-    glTexCoord2i(crop_lb.x, crop_lb.y); glVertex2d(left_bottom.x, left_bottom.y);
-  glEnd();
+  glVertexPointer(dim, GL_INT, 0, pos);
+  glTexCoordPointer(2, GL_DOUBLE, 0, crop);
+  glDrawArrays(GL_TRIANGLE_FAN,0,4);
+}
+
+void Texture2D::draw(const GLdouble* pos, int dim) const {
+  glBindTexture(GL_TEXTURE_2D, info.texture);
+  glVertexPointer(dim, GL_DOUBLE, 0, pos);
+  glTexCoordPointer(2, GL_DOUBLE, 0, crop);
+  glDrawArrays(GL_TRIANGLE_FAN,0,4);
+}
+
+void Texture2D::draw(const GLint* pos, int dim, const GLdouble* crop_in, int vertex_count) const {
+  glBindTexture(GL_TEXTURE_2D, info.texture);
+  glVertexPointer(dim, GL_INT, 0, pos);
+  glTexCoordPointer(2, GL_DOUBLE, 0, crop_in);
+  glDrawArrays(GL_TRIANGLE_FAN,0,vertex_count);
+}
+
+void Texture2D::draw(const GLdouble* pos, int dim, const GLdouble* crop_in, int vertex_count) const {
+  glBindTexture(GL_TEXTURE_2D, info.texture);
+  glVertexPointer(dim, GL_DOUBLE, 0, pos);
+  glTexCoordPointer(2, GL_DOUBLE, 0, crop_in);
+  glDrawArrays(GL_TRIANGLE_FAN,0,vertex_count);
 }
 
 //Texture2D& Texture2D::setRepeatScale(float x_sc, float y_sc) {
@@ -118,14 +153,14 @@ void Texture2D::draw(const point& left_top,
 Texture2D& Texture2D::setCropRegion(
         const point& left_top,const point& right_top,
         const point& right_bottom, const point& left_bottom) {
-    crop_lt.x = double(info.width)/left_top.x;
-    crop_rt.x = double(info.width)/right_top.x;
-    crop_rb.x = double(info.width)/right_bottom.x;
-    crop_lb.x = double(info.width)/left_bottom.x;
+    crop[0][0] = double(info.width)/left_top.x;
+    crop[1][0] = double(info.width)/right_top.x;
+    crop[2][0] = double(info.width)/right_bottom.x;
+    crop[3][0] = double(info.width)/left_bottom.x;
 
-    crop_lt.y = double(info.height)/left_top.y;
-    crop_rt.y = double(info.height)/right_top.y;
-    crop_rb.y = double(info.height)/right_bottom.y;
-    crop_lb.y = double(info.height)/left_bottom.y;
+    crop[0][1] = double(info.height)/left_top.y;
+    crop[1][1] = double(info.height)/right_top.y;
+    crop[2][1] = double(info.height)/right_bottom.y;
+    crop[3][1] = double(info.height)/left_bottom.y;
     return *this;
 }

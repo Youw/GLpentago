@@ -1,19 +1,18 @@
 #include "menu.h"
 #include <type_traits>
 
-Menu::Menu(int x_left_top,
-           int y_left_top,
+Menu::Menu(int x_getLeft_getTop,
+           int y_getLeft_getTop,
            int width,
            int height,
            const Texture2D& texture): active_index(0), active(true) {
-  setPos(x_left_top,y_left_top);
+  setPos(x_getLeft_getTop,y_getLeft_getTop);
   setSize(width, height);
   setTexture(texture);
 }
 
 Menu& Menu::setSize(int width, int height) {
-  right_bottom.first = left_top.first+width;
-  right_bottom.second = left_top.second+height;
+  pos.setSize(width,height);
   return *this;
 }
 
@@ -33,62 +32,70 @@ Menu& Menu::setActiveIndex(int index) {
 
 void Menu::draw() const {
 
-  float sx = right_bottom.first-left_top.first,sy = right_bottom.second-left_top.second;
-  float crop = 0.01, cro2=4*crop;
-  float bcr = crop*sx, bc2 = cro2*sy;
+  double sx = pos.width(),sy = pos.height();
+  double cro1 = 0.01, cro2=4*cro1;
+  double bcr = cro1*sx, bc2 = cro2*sy;
   sx/=90;
   sy/=90;
+  GLdouble position[12*2] = {
+    pos.getLeft()    +0.0,pos.getTop()    +bc2,
+    pos.getLeft()    +bcr,pos.getTop()    +bcr,
+    pos.getLeft()    +bc2,pos.getTop()    +0.0,
 
-  glColor4d(0.7,0.6,0.6,0.3);
-  glBegin(GL_POLYGON);
-     glVertex2d(left_top.first        ,left_top.second    +bc2);
-     glVertex2d(left_top.first    +bcr,left_top.second    +bcr);
-     glVertex2d(left_top.first    +bc2,left_top.second        );
+    pos.getRight()-bc2	 ,pos.getTop()    +0.0,
+    pos.getRight()-bcr	 ,pos.getTop()    +bcr,
+    pos.getRight()+0.0	 ,pos.getTop()    +bc2,
 
-     glVertex2d(right_bottom.first-bc2,left_top.second        );
-     glVertex2d(right_bottom.first-bcr,left_top.second    +bcr);
-     glVertex2d(right_bottom.first    ,left_top.second    +bc2);
+    pos.getRight()+0.0 	 ,pos.getBottom()-bc2 ,
+    pos.getRight()-bcr	 ,pos.getBottom()-bcr ,
+    pos.getRight()-bc2	 ,pos.getBottom()+0.0 ,
 
-     glVertex2d(right_bottom.first    ,right_bottom.second-bc2);
-     glVertex2d(right_bottom.first-bcr,right_bottom.second-bcr);
-     glVertex2d(right_bottom.first-bc2,right_bottom.second    );
+    pos.getLeft()    +bc2,pos.getBottom()+0.0 ,
+    pos.getLeft()    +bcr,pos.getBottom()-bcr ,
+    pos.getLeft()    +0.0,pos.getBottom()-bc2
+  };
 
-     glVertex2d(left_top.first    +bc2,right_bottom.second    );
-     glVertex2d(left_top.first    +bcr,right_bottom.second-bcr);
-     glVertex2d(left_top.first        ,right_bottom.second-bc2);
-  glEnd();
-  glColor4d(0.5,0.5,0.5,0.6);
+  GLdouble crop[12*2] = {
+    (0.0     )*sx, (1.0-cro2)*sy,
+    (0.0+cro1)*sx, (1.0-cro1)*sy,
+    (0.0+cro2)*sx, (1.0     )*sy,
 
-  glBindTexture(GL_TEXTURE_2D,texture);
-  glBegin(GL_POLYGON);
-    glTexCoord2d((0.0     )*sx, (1.0-cro2)*sy); glVertex2d(left_top.first        ,left_top.second    +bc2);
-    glTexCoord2d((0.0+crop)*sx, (1.0-crop)*sy); glVertex2d(left_top.first    +bcr,left_top.second    +bcr);
-    glTexCoord2d((0.0+cro2)*sx, (1.0     )*sy); glVertex2d(left_top.first    +bc2,left_top.second        );
+    (1.0-cro2)*sx, (1.0     )*sy,
+    (1.0-cro1)*sx, (1.0-cro1)*sy,
+    (1.0     )*sx, (1.0-cro2)*sy,
 
-    glTexCoord2d((1.0-cro2)*sx, (1.0     )*sy); glVertex2d(right_bottom.first-bc2,left_top.second        );
-    glTexCoord2d((1.0-crop)*sx, (1.0-crop)*sy); glVertex2d(right_bottom.first-bcr,left_top.second    +bcr);
-    glTexCoord2d((1.0     )*sx, (1.0-cro2)*sy); glVertex2d(right_bottom.first    ,left_top.second    +bc2);
+    (1.0     )*sx, (0.0+cro2)*sy,
+    (1.0-cro1)*sx, (0.0+cro1)*sy,
+    (1.0-cro2)*sx, (0.0     )*sy,
 
-    glTexCoord2d((1.0     )*sx, (0.0+cro2)*sy); glVertex2d(right_bottom.first    ,right_bottom.second-bc2);
-    glTexCoord2d((1.0-crop)*sx, (0.0+crop)*sy); glVertex2d(right_bottom.first-bcr,right_bottom.second-bcr);
-    glTexCoord2d((1.0-cro2)*sx, (0.0     )*sy); glVertex2d(right_bottom.first-bc2,right_bottom.second    );
+    (0.0+cro2)*sx, (0.0     )*sy,
+    (0.0+cro1)*sx, (0.0+cro1)*sy,
+    (0.0     )*sx, (0.0+cro2)*sy
+  };
 
-    glTexCoord2d((0.0+cro2)*sx, (0.0     )*sy); glVertex2d(left_top.first    +bc2,right_bottom.second    );
-    glTexCoord2d((0.0+crop)*sx, (0.0+crop)*sy); glVertex2d(left_top.first    +bcr,right_bottom.second-bcr);
-    glTexCoord2d((0.0     )*sx, (0.0+cro2)*sy); glVertex2d(left_top.first        ,right_bottom.second-bc2);
-  glEnd();
+  texture.draw(position,2,crop,12);
+//  glBindTexture(GL_TEXTURE_2D,texture);
+//  glBegin(GL_POLYGON);
+//    glTexCoord2d((0.0     )*sx, (1.0-cro2)*sy); glVertex2d(pos.getLeft()        ,pos.getTop()    +bc2);
+//    glTexCoord2d((0.0+crop)*sx, (1.0-crop)*sy); glVertex2d(pos.getLeft()    +bcr,pos.getTop()    +bcr);
+//    glTexCoord2d((0.0+cro2)*sx, (1.0     )*sy); glVertex2d(pos.getLeft()    +bc2,pos.getTop()        );
+
+//    glTexCoord2d((1.0-cro2)*sx, (1.0     )*sy); glVertex2d(pos.getRight()-bc2,pos.getTop()        );
+//    glTexCoord2d((1.0-crop)*sx, (1.0-crop)*sy); glVertex2d(pos.getRight()-bcr,pos.getTop()    +bcr);
+//    glTexCoord2d((1.0     )*sx, (1.0-cro2)*sy); glVertex2d(pos.getRight()    ,pos.getTop()    +bc2);
+
+//    glTexCoord2d((1.0     )*sx, (0.0+cro2)*sy); glVertex2d(pos.getRight()    ,pos.getBottom()-bc2);
+//    glTexCoord2d((1.0-crop)*sx, (0.0+crop)*sy); glVertex2d(pos.getRight()-bcr,pos.getBottom()-bcr);
+//    glTexCoord2d((1.0-cro2)*sx, (0.0     )*sy); glVertex2d(pos.getRight()-bc2,pos.getBottom()    );
+
+//    glTexCoord2d((0.0+cro2)*sx, (0.0     )*sy); glVertex2d(pos.getLeft()    +bc2,pos.getBottom()    );
+//    glTexCoord2d((0.0+crop)*sx, (0.0+crop)*sy); glVertex2d(pos.getLeft()    +bcr,pos.getBottom()-bcr);
+//    glTexCoord2d((0.0     )*sx, (0.0+cro2)*sy); glVertex2d(pos.getLeft()        ,pos.getBottom()-bc2);
+//  glEnd();
 
   for(auto o: menu_objects) {
     o->draw();
   }
-//  int xx = (left_top.first+right_bottom.first-labels.front().width())/2;
-//  glColor4f(1,0,0,0.5);
-//  glBegin(GL_QUADS);
-//    glVertex2d(xx,left_top.second);
-//    glVertex2d(xx+labels.front().width(),left_top.second);
-//    glVertex2d(xx+labels.front().width(),left_top.second+50);
-//    glVertex2d(xx,left_top.second+50);
-//  glEnd();
 }
 
 void Menu::click(int x, int y) {
@@ -129,17 +136,15 @@ void Menu::unHover() {
 }
 
 bool Menu::underMouse(int x, int y) const {
-  return (left_top.first <= x) && (left_top.second <= y) &&
-      (right_bottom.first >= x) && (right_bottom.second >= y);
+  return pos.posInRect(x,y);
 }
 
 void Menu::setPos(int x, int y) {
-  left_top.first = x;
-  left_top.second = y;
+  pos.setPos(x,y);
 }
 
 static bool isActive(const std::shared_ptr<RenderObject>& o) {
-    return o->isActive();
+  return o->isActive();
 }
 
 void Menu::keyPress(int key, bool repeat, KeyboardModifier mod) {

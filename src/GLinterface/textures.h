@@ -1,8 +1,11 @@
 #ifndef TEXTURES_H
 #define TEXTURES_H
 
-//#include <GL/gl.h>
-#include <QtOpenGL>
+#if !defined(HAVE_GLES)
+#include <GL/gl.h>
+#else
+#include <GLES/gl.h>
+#endif
 
 //QT staff
 #include <QString>
@@ -31,8 +34,7 @@ class Texture2D
   Texture2DInfo info;
   string filename;
   Tcontext* cxt;
-//  float scale_x, scale_y;
-  point_base<GLdouble> crop_lt, crop_rt, crop_rb, crop_lb;
+  GLdouble crop[4][2];
 public:
 
   //construct and load texture from file
@@ -71,6 +73,17 @@ public:
              const point& right_top,
              const point& right_bottom,
              const point& left_bottom) const;
+
+  //draw texture on current OpenGL context
+  //in quadrangle setted by input array
+  //using glDrawElements
+  void draw(const GLint* pos, int dim) const;
+
+  void draw(const GLdouble* pos, int dim) const;
+
+  void draw(const GLint* pos, int dim, const GLdouble* crop_in, int vertex_count = 4) const;
+
+  void draw(const GLdouble* pos, int dim, const GLdouble* crop_in, int vertex_count = 4) const;
 
   //if texture is repeatable pattern,
   //scale must be setted, otherwise - zero (by default)

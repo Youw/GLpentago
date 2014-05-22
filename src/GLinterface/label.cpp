@@ -42,24 +42,6 @@ int Label::height() const {
 
 
 void Label::draw() const {
-//    glColor4f(1,0,0,0.5);
-//    int dy = text_font->fontMetrics().ascent();
-//   // int dy2 = text_font->fontMetrics().descent();
-//  //  int dy2 = text_font->fontMetrics().leading();
-//    int dy2 = -text_font->fontMetrics().height();
-//    glBegin(GL_QUADS);
-//      glVertex2f(x_pos,y_pos);
-//      glVertex2f(x_pos+width(),y_pos);
-//      glVertex2f(x_pos+width(),y_pos-dy);
-//      glVertex2f(x_pos,y_pos-dy);
-//    glEnd();
-//    glColor4f(0,1,0,0.5);
-//    glBegin(GL_QUADS);
-//      glVertex2f(x_pos,y_pos);
-//      glVertex2f(x_pos+width(),y_pos);
-//      glVertex2f(x_pos+width(),y_pos-dy2);
-//      glVertex2f(x_pos,y_pos-dy2);
-//    glEnd();
   if(backgound) {
       glColor4f(1,1,1,1);
       int a = getFontMetrics().averageCharWidth();

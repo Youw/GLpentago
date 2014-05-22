@@ -31,7 +31,8 @@ HEADERS  += glview.h \
     GLinterface/menu.h \
     GLinterface/fontkeeper.h \
     GLinterface/fontkeeperbase.h \
-    GLinterface/textedit.h
+    GLinterface/textedit.h \
+    GLinterface/GLRectangleCoord.h
 
 RESOURCES += \
     GLinterface/GLgraphics.qrc

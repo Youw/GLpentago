@@ -4,6 +4,7 @@
 #include "renderobject.h"
 #include "textures.h"
 #include "fontkeeperbase.h"
+#include "GLRectangleCoord.h"
 #include "label.h"
 
 #include <utility>
@@ -14,17 +15,17 @@ class QGLWidget;
 class Button: public RenderObject, public FontKeeperBase<Button>
 {
 public:
-  Button(int x_left_top = 0,
-         int y_left_top = 0,
-         int width = 0,
-         int height = 0,
+  Button(GLint x_left_top = 0,
+         GLint y_left_top = 0,
+         GLint width = 0,
+         GLint height = 0,
          const string& caption = "Button",
          const Texture2D& texture = Texture2D());
 
   Button& setTexture(const Texture2D& texture);
   Button& setCaption(const string& caption);
   Button& setClickCallBack(const std::function<void()>& call_back);
-  Button& setSize(int width, int height);
+  Button& setSize(GLint width, GLint height);
 
   virtual Button& setFont(const QFont& font) override;
   virtual const QFont& getFont() const override;
@@ -44,20 +45,20 @@ public:
   virtual bool isActive() const override { return active; }
   virtual bool canBeActive() const override { return true; }
 
-  virtual void click(int x, int y) override;
-  virtual void mouseDown(int x, int y) override;
-  virtual void mouseUp(int x, int y) override;
-  virtual void hover(int x, int y) override;
+  virtual void click(GLint x, GLint y) override;
+  virtual void mouseDown(GLint x, GLint y) override;
+  virtual void mouseUp(GLint x, GLint y) override;
+  virtual void hover(GLint x, GLint y) override;
   virtual void unHover() override;
-  virtual bool underMouse(int x, int y) const override;
+  virtual bool underMouse(GLint x, GLint y) const override;
 
   //position of left top corner
-  virtual void setPos(int x, int y) override;
-  virtual int posX() const override { return left_top.first; }
-  virtual int posY() const override { return left_top.second; }
+  virtual void setPos(GLint x, GLint y) override;
+  virtual GLint posX() const override;
+  virtual GLint posY() const override;
 
-  virtual int height() const override { return right_bottom.second-left_top.second; }
-  virtual int width() const override { return right_bottom.first-left_top.first; }
+  virtual GLint height() const override;
+  virtual GLint width() const override;
 
   virtual void keyPress(int key, bool repeat, KeyboardModifier mod) override;
   virtual void keyRelease(int key, KeyboardModifier mod) override;
@@ -68,8 +69,10 @@ private:
   //calculate and set position of text
   void resetTextPos();
   Texture2D texture;
-  std::pair<int,int> left_top;
-  std::pair<int,int> right_bottom;
+
+  //4 two dimensional points
+  //left_top, right_top, right_bottom, left_bottom
+  GLRectangleCoord<GLint,2> pos;
 
   Label text;
 

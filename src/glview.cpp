@@ -4,8 +4,15 @@
 #include <QDebug>
 #include <climits>
 
+#include "GLinterface/button.h"
+
+#if !defined(HAVE_GLES)
+#include <GL/gl.h>
 #include "GL/glu.h"
-//#include <GLES/gl.h>
+#else
+#include <GLES/gl.h>
+#endif
+
 
 GLview::GLview(QWidget *parent)
     : QGLWidget(parent)
@@ -108,16 +115,18 @@ void GLview::goToMenu(Menu& menu) {
 }
 
 void GLview::initializeGL() {
+  glEnable(GL_TEXTURE_2D);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glEnableClientState(GL_VERTEX_ARRAY);
+  glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
   Button::texture_blurr.load(":/graphics/glass_blurred.jpg",this->context());
   menu_background_texture.load(":/graphics/background.jpg",this->context());
 
   buildMenus();
 
-  current_objects.push_back(&main_menu );
-
-  glEnable(GL_TEXTURE_2D);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  current_objects.push_back(&main_menu );  
 }
 
 void GLview::resizeGL(int w, int h) {
@@ -131,7 +140,11 @@ void GLview::resizeGL(int w, int h) {
   glMatrixMode( GL_PROJECTION );
     glLoadIdentity();
 //    gluPerspective(45.0f, float(w)/h, -1024.f, 2048.0f);
+#if !defined(HAVE_GLES)
     glOrtho(0, w, h, 0, -1024, 1024 );
+#else
+    glOrthof(0, w, h, 0, -1024, 1024 );
+#endif
     glTranslatef(dx/2.0,dy/2.0,0);
     glScalef(wh/1024.0,wh/1024.0,1);
   glMatrixMode( GL_MODELVIEW );
@@ -178,7 +191,12 @@ void GLview::drawBackground(Texture2D& texture) {
   glMatrixMode( GL_PROJECTION );
   glPushMatrix();
   glLoadIdentity();
+#if !defined(HAVE_GLES)
   glOrtho(0, width, height, 0, -1, 1 );
+#else
+  glOrtho(0, width, height, 0, -1, 1 );
+#endif
+
   float back_ratio = texture.width()/float(texture.height());
   float window_ratio = width/float(height);
   if(window_ratio>back_ratio) {
