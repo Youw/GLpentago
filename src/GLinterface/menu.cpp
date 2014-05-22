@@ -32,45 +32,46 @@ Menu& Menu::setActiveIndex(int index) {
 
 void Menu::draw() const {
 
-  double sx = pos.width(),sy = pos.height();
-  double cro1 = 0.01, cro2=4*cro1;
-  double bcr = cro1*sx, bc2 = cro2*sy;
+  GLdouble sx = pos.width(),sy = pos.height();
+  GLdouble cro1 = 0.01, cro2=4*cro1;
+  GLdouble bcr = cro1*sx, bc2 = cro2*sy;
   sx/=90;
   sy/=90;
   GLdouble position[12*2] = {
-    pos.getLeft()    +0.0,pos.getTop()    +bc2,
+
+  GLdouble(pos.getLeft()),pos.getTop()    +bc2,
     pos.getLeft()    +bcr,pos.getTop()    +bcr,
-    pos.getLeft()    +bc2,pos.getTop()    +0.0,
+    pos.getLeft()    +bc2,GLdouble(pos.getTop()),
 
-    pos.getRight()-bc2	 ,pos.getTop()    +0.0,
+    pos.getRight()-bc2	 ,GLdouble(pos.getTop()),
     pos.getRight()-bcr	 ,pos.getTop()    +bcr,
-    pos.getRight()+0.0	 ,pos.getTop()    +bc2,
+ GLdouble(pos.getRight()),pos.getTop()    +bc2,
 
-    pos.getRight()+0.0 	 ,pos.getBottom()-bc2 ,
+ GLdouble(pos.getRight()),pos.getBottom()-bc2 ,
     pos.getRight()-bcr	 ,pos.getBottom()-bcr ,
-    pos.getRight()-bc2	 ,pos.getBottom()+0.0 ,
+    pos.getRight()-bc2	 ,GLdouble(pos.getBottom()),
 
-    pos.getLeft()    +bc2,pos.getBottom()+0.0 ,
+    pos.getLeft()    +bc2,GLdouble(pos.getBottom()),
     pos.getLeft()    +bcr,pos.getBottom()-bcr ,
-    pos.getLeft()    +0.0,pos.getBottom()-bc2
+  GLdouble(pos.getLeft()),pos.getBottom()-bc2
   };
 
   GLdouble crop[12*2] = {
-    (0.0     )*sx, (1.0-cro2)*sy,
-    (0.0+cro1)*sx, (1.0-cro1)*sy,
-    (0.0+cro2)*sx, (1.0     )*sy,
+    GLdouble(0.0     )*sx, GLdouble(1.0-cro2)*sy,
+    GLdouble(0.0+cro1)*sx, GLdouble(1.0-cro1)*sy,
+    GLdouble(0.0+cro2)*sx, GLdouble(1.0     )*sy,
 
-    (1.0-cro2)*sx, (1.0     )*sy,
-    (1.0-cro1)*sx, (1.0-cro1)*sy,
-    (1.0     )*sx, (1.0-cro2)*sy,
+    GLdouble(1.0-cro2)*sx, GLdouble(1.0     )*sy,
+    GLdouble(1.0-cro1)*sx, GLdouble(1.0-cro1)*sy,
+    GLdouble(1.0     )*sx, GLdouble(1.0-cro2)*sy,
 
-    (1.0     )*sx, (0.0+cro2)*sy,
-    (1.0-cro1)*sx, (0.0+cro1)*sy,
-    (1.0-cro2)*sx, (0.0     )*sy,
+    GLdouble(1.0     )*sx, GLdouble(0.0+cro2)*sy,
+    GLdouble(1.0-cro1)*sx, GLdouble(0.0+cro1)*sy,
+    GLdouble(1.0-cro2)*sx, GLdouble(0.0     )*sy,
 
-    (0.0+cro2)*sx, (0.0     )*sy,
-    (0.0+cro1)*sx, (0.0+cro1)*sy,
-    (0.0     )*sx, (0.0+cro2)*sy
+    GLdouble(0.0+cro2)*sx, GLdouble(0.0     )*sy,
+    GLdouble(0.0+cro1)*sx, GLdouble(0.0+cro1)*sy,
+    GLdouble(0.0     )*sx, GLdouble(0.0+cro2)*sy
   };
 
   texture.draw(position,2,crop,12);

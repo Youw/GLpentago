@@ -11,6 +11,8 @@
 #include <QPixmap>
 #include <QGLFormat>
 
+#include "GLRectangleCoord.h"
+
 namespace
 {
     const int TEXTURE_SIZE = 256;
@@ -20,8 +22,7 @@ namespace
         GLuint textureId;
         GLsizei width;
         GLsizei height;
-        GLfloat s[2];
-        GLfloat t[2];
+        GLRectangleCoord<GLfloat> pos;
     };
 
 } // anonymous namespace
@@ -112,10 +113,15 @@ CharData &GLfontImpl::createCharacter(QChar c)
     character.textureId = texture;
     character.width = width;
     character.height = height;
-    character.s[0] = static_cast<GLfloat>(xOffset) / TEXTURE_SIZE;
-    character.t[0] = static_cast<GLfloat>(yOffset) / TEXTURE_SIZE;
-    character.s[1] = static_cast<GLfloat>(xOffset + width) / TEXTURE_SIZE;
-    character.t[1] = static_cast<GLfloat>(yOffset + height) / TEXTURE_SIZE;
+//    character.s[0] = static_cast<GLfloat>(xOffset) / TEXTURE_SIZE;
+//    character.t[0] = static_cast<GLfloat>(yOffset) / TEXTURE_SIZE;
+//    character.s[1] = static_cast<GLfloat>(xOffset + width) / TEXTURE_SIZE;
+//    character.t[1] = static_cast<GLfloat>(yOffset + height) / TEXTURE_SIZE;
+
+    character.pos.setLeft(  static_cast<GLfloat>(xOffset) / TEXTURE_SIZE);
+    character.pos.setBottom(static_cast<GLfloat>(yOffset) / TEXTURE_SIZE);
+    character.pos.setRight( static_cast<GLfloat>(xOffset + width) / TEXTURE_SIZE);
+    character.pos.setTop(   static_cast<GLfloat>(yOffset + height) / TEXTURE_SIZE);
 
     xOffset += width;
     if (xOffset + fontMetrics.maxWidth() >= TEXTURE_SIZE)
@@ -151,8 +157,9 @@ const QFontMetrics& GLfont::fontMetrics() const
 }
 
 //! Renders text at given x, y.
-void GLfont::renderText(float x, float y, const QString &text)
+void GLfont::renderText(GLfloat x, GLfloat y, const QString &text)
 {
+    if(text.isEmpty()) return;
     // If the current context's device is not active for painting, the
     // texture generation does not work. This may be specific to the way
     // MIFit is setup.
@@ -161,15 +168,16 @@ void GLfont::renderText(float x, float y, const QString &text)
 //    if (!QGLContext::currentContext()->device()->paintingActive())
 //        return;
 
-    glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT | GL_TEXTURE_BIT);
+//    glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT | GL_TEXTURE_BIT);
 
-    glEnable(GL_TEXTURE_2D);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//    glEnable(GL_TEXTURE_2D);
+//    glEnable(GL_BLEND);
+//    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    glPushMatrix();
+//    glPushMatrix();
     GLuint texture = 0;
-    glTranslatef(x, y, 0);
+//    glTranslatef(x, y, 0);
+    GLRectangleCoord<GLfloat> char_pos(x,y);
     for (int i = 0; i < text.length(); ++i)
     {
         CharData &c = d->createCharacter(text[i]);
@@ -178,29 +186,34 @@ void GLfont::renderText(float x, float y, const QString &text)
             texture = c.textureId;
             glBindTexture(GL_TEXTURE_2D, texture);
         }
+        char_pos.setSize(c.width,c.height);
+        glVertexPointer(char_pos.dimension, GL_FLOAT, 0, char_pos.glCoords());
+        glTexCoordPointer(2, GL_FLOAT, 0, c.pos.glCoords());
+        glDrawArrays(GL_TRIANGLE_FAN,0,4);
+
+        char_pos.setPos(char_pos.getLeft()+c.width,char_pos.getTop());
+
+//        glBegin(GL_QUADS);
+//        glTexCoord2f(c.s[0], c.t[0]);
+//        glVertex2f(0, c.height);
 
 
-        glBegin(GL_QUADS);
-        glTexCoord2f(c.s[0], c.t[0]);
-        glVertex2f(0, c.height);
+//        glTexCoord2f(c.s[1], c.t[0]);
+//        glVertex2f(c.width, c.height);
 
 
-        glTexCoord2f(c.s[1], c.t[0]);
-        glVertex2f(c.width, c.height);
+//        glTexCoord2f(c.s[1], c.t[1]);
+//        glVertex2f(c.width, 0);
 
+//        glTexCoord2f(c.s[0], c.t[1]);
+//        glVertex2f(0, 0);
+//        glEnd();
 
-        glTexCoord2f(c.s[1], c.t[1]);
-        glVertex2f(c.width, 0);
-
-        glTexCoord2f(c.s[0], c.t[1]);
-        glVertex2f(0, 0);
-        glEnd();
-
-        glTranslatef(c.width, 0, 0);
+//        glTranslatef(c.width, 0, 0);
     }
 
     glPopMatrix();
-    glPopAttrib();
+//    glPopAttrib();
 }
 
 } // namespace glutils

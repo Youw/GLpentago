@@ -1,5 +1,6 @@
 #include "label.h"
 #include <limits>
+#include <cstdint>
 
 Label::Label(const string& m_text,int x,int y,const QFont& font):
     FontKeeper(font), text(m_text), x_pos(x), y_pos(y) {
@@ -50,7 +51,7 @@ void Label::draw() const {
                      {x_pos+text_width+a,y_pos+height()},
                      {x_pos-a,y_pos+height()});
   }
-  glColor4iv(font_color);
+  glColor4f(double(font_color[0])*INT_MAX,double(font_color[1])*INT_MAX,double(font_color[2])*INT_MAX,double(font_color[3])*INT_MAX);
   text_font->renderText(x_pos,y_pos,text);
 }
 

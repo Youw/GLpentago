@@ -1,6 +1,12 @@
 #ifndef GL_FONT_UTILS_H
 #define GL_FONT_UTILS_H
 
+#ifdef HAVE_GLES
+#include <GLES/gl.h>
+#else
+#include <GL/gl.h>
+#endif
+
 #include <QtGlobal>
 
 class QChar;
@@ -22,7 +28,7 @@ public:
     const QFont& font() const;
     const QFontMetrics& fontMetrics() const;
 
-    void renderText(float x, float y, const QString &text);
+    void renderText(GLfloat x, GLfloat y, const QString &text);
 
 
 private:

@@ -111,12 +111,12 @@ void Button::draw() const {
   GLint dx = 0;
   GLint dy = 0;
   if (active && pressed) {
-    glColor4b(50,50,50,70);
+    glColor4f(.39,.39,.39,.55);
     texture.draw(pos.glCoords(),pos.dimension);
     dx = 2;
     dy = 1;
   }
-  glColor4b(127,127,127,127);//black
+  glColor4f(1,1,1,1);//black
   work_pos.setLeft(work_pos.getLeft()+dx);
   work_pos.setRight(work_pos.getRight()-dx);
   work_pos.setTop(work_pos.getTop()+dy);
@@ -128,7 +128,7 @@ void Button::draw() const {
     work_pos.setLeft(work_pos.getLeft()+dx);
     work_pos.setRight(work_pos.getRight()-dx);
 
-    glColor4b(127,127,127,30);//transparent
+    glColor4f(1,1,1,.23);//transparent
     texture_blurr.draw(work_pos.glCoords(),work_pos.dimension);
   }
   text.draw();
