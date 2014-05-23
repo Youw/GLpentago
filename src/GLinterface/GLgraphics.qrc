@@ -1,9 +1,9 @@
 <RCC>
     <qresource prefix="/graphics">
-        <file>background.jpg</file>
-        <file>button_menu.jpg</file>
-        <file>glass_blurred.jpg</file>
-        <file>dots.png</file>
-        <file>screwed_background.jpg</file>
+        <file>graphics/background.jpg</file>
+        <file>graphics/button_menu.jpg</file>
+        <file>graphics/dots.png</file>
+        <file>graphics/glass_blurred.jpg</file>
+        <file>graphics/screwed_background.jpg</file>
     </qresource>
 </RCC>
