@@ -79,6 +79,7 @@ private:
   std::function<void()> click_call_back;
 
   bool active;
+  bool hovered;
   bool pressed;
   //for some little effect
   GLint alpha_color_bak;

@@ -11,6 +11,11 @@ Menu::Menu(int x_getLeft_getTop,
   setTexture(texture);
 }
 
+Menu& Menu::setKeyCallBack(int key, const std::function<MenuKeyCallBack>& call_back) {
+  key_call_backs[key] = call_back;
+  return *this;
+}
+
 Menu& Menu::setSize(int width, int height) {
   pos.setSize(width,height);
   return *this;
@@ -75,24 +80,6 @@ void Menu::draw() const {
   };
 
   texture.draw(position,2,crop,12);
-//  glBindTexture(GL_TEXTURE_2D,texture);
-//  glBegin(GL_POLYGON);
-//    glTexCoord2d((0.0     )*sx, (1.0-cro2)*sy); glVertex2d(pos.getLeft()        ,pos.getTop()    +bc2);
-//    glTexCoord2d((0.0+crop)*sx, (1.0-crop)*sy); glVertex2d(pos.getLeft()    +bcr,pos.getTop()    +bcr);
-//    glTexCoord2d((0.0+cro2)*sx, (1.0     )*sy); glVertex2d(pos.getLeft()    +bc2,pos.getTop()        );
-
-//    glTexCoord2d((1.0-cro2)*sx, (1.0     )*sy); glVertex2d(pos.getRight()-bc2,pos.getTop()        );
-//    glTexCoord2d((1.0-crop)*sx, (1.0-crop)*sy); glVertex2d(pos.getRight()-bcr,pos.getTop()    +bcr);
-//    glTexCoord2d((1.0     )*sx, (1.0-cro2)*sy); glVertex2d(pos.getRight()    ,pos.getTop()    +bc2);
-
-//    glTexCoord2d((1.0     )*sx, (0.0+cro2)*sy); glVertex2d(pos.getRight()    ,pos.getBottom()-bc2);
-//    glTexCoord2d((1.0-crop)*sx, (0.0+crop)*sy); glVertex2d(pos.getRight()-bcr,pos.getBottom()-bcr);
-//    glTexCoord2d((1.0-cro2)*sx, (0.0     )*sy); glVertex2d(pos.getRight()-bc2,pos.getBottom()    );
-
-//    glTexCoord2d((0.0+cro2)*sx, (0.0     )*sy); glVertex2d(pos.getLeft()    +bc2,pos.getBottom()    );
-//    glTexCoord2d((0.0+crop)*sx, (0.0+crop)*sy); glVertex2d(pos.getLeft()    +bcr,pos.getBottom()-bcr);
-//    glTexCoord2d((0.0     )*sx, (0.0+cro2)*sy); glVertex2d(pos.getLeft()        ,pos.getBottom()-bc2);
-//  glEnd();
 
   for(auto o: menu_objects) {
     o->draw();
@@ -126,6 +113,7 @@ void Menu::hover(int x, int y) {
       menu_objects[i]->hover(x,y);
       if(active_index!=i && menu_objects[i]->isActive()) {
         menu_objects[active_index]->setActive(false);
+        menu_objects[active_index]->unHover();
         active_index = i;
       } else {
           if (!menu_objects[i]->isActive())
@@ -151,11 +139,10 @@ void Menu::setPos(int x, int y) {
   pos.setPos(x,y);
 }
 
-static bool isActive(const std::shared_ptr<RenderObject>& o) {
-  return o->isActive();
-}
-
 void Menu::keyPress(int key, bool repeat, KeyboardModifier mod) {
+  if(key_call_backs.find(key)!=key_call_backs.end()) {
+      key_call_backs[key](key,*this);
+    }
   if (mod == MD_NONE) {
     if (key==Qt::Key_Tab) key = Qt::Key_Down; else
     //Shift+Tab
@@ -189,24 +176,32 @@ void Menu::keyPress(int key, bool repeat, KeyboardModifier mod) {
       } while(find_count && !(menu_objects[index]->canBeActive()));
       setActiveIndex(index);
       break;
-    case Qt::Key_Escape: {
-      auto o = menu_objects.back();
-      o->click(o->posX()+o->width()/2,o->posY()+o->height()/2);
-      break;
-    }
     default:
-      auto it = std::find_if(menu_objects.begin(),menu_objects.end(),::isActive);
-      if (it!=menu_objects.end()) (*it)->keyPress(key,repeat,mod);
+      for (auto& o: menu_objects) {
+          if(o->isActive()) {
+              o->keyPress(key,repeat,mod);
+              break;
+            }
+        }
   }
 }
 
+
 void Menu::keyRelease(int key, KeyboardModifier mod) {
-  auto it = std::find_if(menu_objects.begin(),menu_objects.end(),::isActive);
-  if (it!=menu_objects.end()) (*it)->keyRelease(key,mod);
+  for (auto& o: menu_objects) {
+      if(o->isActive()) {
+          o->keyRelease(key,mod);
+          break;
+        }
+    }
 }
 
 void Menu::charInput(int unicode_key) {
-    auto it = std::find_if(menu_objects.begin(),menu_objects.end(),::isActive);
-    if (it!=menu_objects.end()) (*it)->charInput(unicode_key);
+  for (auto& o: menu_objects) {
+      if(o->isActive()) {
+          o->charInput(unicode_key);
+          break;
+        }
+    }
 }
 

@@ -9,6 +9,13 @@
 #include <list>
 #include <vector>
 #include <memory>
+#include <functional>
+#include <unordered_map>
+
+class Menu;
+class MenuItemResponser;
+
+using  MenuKeyCallBack = void(int key, Menu& menu);
 
 class Menu: public RenderObject
 {
@@ -18,6 +25,8 @@ public:
        int width = 0,
        int height = 0,
        const Texture2D& texture = Texture2D());
+
+  Menu& setKeyCallBack(int key, const std::function<MenuKeyCallBack>& call_back);
 
   Menu& setSize(int width, int height);
   Menu& setTexture(const Texture2D& texture);
@@ -55,6 +64,9 @@ public:
   virtual void charInput(int unicode_key) override;
 
 private:
+  std::unordered_map<int,std::function<MenuKeyCallBack>> key_call_backs;
+
+  friend class MenuItemResponser;
   Texture2D texture;
   GLRectangleCoord<GLint> pos;
 
@@ -78,5 +90,20 @@ Menu& Menu::addObject(const RenderObjectType& object) {
     menu_objects.back()->setPos(pos.posXcenter()-object.width()/2,object.posY());
   return *this;
 }
+
+class MenuItemResponser {
+  unsigned index;
+public:
+  MenuItemResponser(unsigned item_index) {
+    index = item_index;
+  }
+  void operator() (int key, Menu& menu) {
+    (void)key;
+    if (index<menu.menu_objects.size()) {
+        auto& o = menu.menu_objects[index];
+        o->click(o->posX()+o->width()/2,o->posY()+o->height()/2);
+      }
+  }
+};
 
 #endif // MENU_H

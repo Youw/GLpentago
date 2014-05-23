@@ -64,7 +64,8 @@ void GLview::buildMenus() {
       .addObject(Button(0,746,512,100,"Exit",button_texture).setClickCallBack(
                    [&]() {
                        this->close();
-                     }));
+                     }))
+      .setKeyCallBack(Qt::Key_Escape,MenuItemResponser(4));
 
   menu_new_game.setPos(200,260);
   menu_new_game.setSize(624,504);
@@ -75,7 +76,8 @@ void GLview::buildMenus() {
       .addObject(Button(0,631,512,100,"Back",button_texture).setClickCallBack(
                    [&]() {
                        this->goMenuBack();
-                     }));
+                     }))
+      .setKeyCallBack(Qt::Key_Escape,MenuItemResponser(2));
 
   menu_load_game.setPos(200,260);
   menu_load_game.setSize(624,504);
@@ -85,7 +87,8 @@ void GLview::buildMenus() {
       .addObject(Button(0,631,512,100,"Back",button_texture).setClickCallBack(
                    [&]() {
                        this->goMenuBack();
-                     }));
+                     }))
+      .setKeyCallBack(Qt::Key_Escape,MenuItemResponser(1));
 
   menu_join_game.setPos(200,260);
   menu_join_game.setSize(624,504);
@@ -94,12 +97,13 @@ void GLview::buildMenus() {
       .addObject(Label("Enter Host IP:",0,280, QFont("Snap ITC", 32, 40, false))
                 .setBackground(Texture2D(":/graphics/screwed_background.jpg",this->context()))
                 )
-      .addObject(TextEdit(0,360,512,80,button_texture))
+      .addObject(TextEdit(0,360,512,80,button_texture).setMaxTextLength(-1))
       .addObject(Button(0,450,512,100,"Connect",button_texture))
       .addObject(Button(0,631,512,100,"Back",button_texture).setClickCallBack(
                    [&]() {
                        this->goMenuBack();
-                     }));
+                     }))
+      .setKeyCallBack(Qt::Key_Escape,MenuItemResponser(3));
 }
 
 void GLview::goMenuBack() {

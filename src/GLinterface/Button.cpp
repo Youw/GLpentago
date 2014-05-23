@@ -16,6 +16,7 @@ Button::Button(
     pos(x_left_top, y_left_top),
     text(caption),
     active(false),
+    hovered(false),
     pressed(false),
     alpha_color_bak(INT_MAX) {
 
@@ -123,7 +124,7 @@ void Button::draw() const {
   work_pos.setBottom(work_pos.getBottom()-dy);
 
   texture.draw(work_pos.glCoords(),work_pos.dimension);
-  if(active | pressed) {
+  if(active | pressed | hovered) {
     dx += work_pos.width()*0.03;
     work_pos.setLeft(work_pos.getLeft()+dx);
     work_pos.setRight(work_pos.getRight()-dx);
@@ -156,12 +157,14 @@ void Button::mouseUp(GLint x, GLint y) {
 }
 
 void Button::hover(GLint x, GLint y) {
+  hovered = true;
   setActive(true);
   (void)x;
   (void)y;
 }
 
 void Button::unHover() {
+  hovered = false;
   setActive(false);
 }
 

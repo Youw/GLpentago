@@ -5,6 +5,7 @@
 #include "textures.h"
 #include "label.h"
 #include "GLRectangleCoord.h"
+#include "fontkeeperbase.h"
 
 #ifndef HAVE_GLES
 #include "GL/gl.h"
@@ -12,7 +13,7 @@
 #include "GLES/gl.h"
 #endif
 
-class TextEdit : public RenderObject
+class TextEdit : public RenderObject, public FontKeeperBase<TextEdit>
 {
 public:
     TextEdit(GLint x_left_top = 0,
@@ -24,7 +25,10 @@ public:
     TextEdit& setSize(GLint width,GLint  height);
 
     unsigned getCurPos() const { return cur_pos; }
-    TextEdit& setCurPos(unsigned cursor_pos);
+    TextEdit& setCurPos(int cursor_pos);
+
+    int getMaxTextLength() const { return max_width; }
+    TextEdit& setMaxTextLength(int length);
 
     const string& getText() const { return text.getText(); }
     TextEdit& setText(const string& text);
@@ -53,17 +57,26 @@ public:
     virtual void keyRelease(int key, KeyboardModifier mod) override;
     virtual void charInput(int unicode_key) override;
 
+    virtual TextEdit& setFont(const QFont& font) override;
+    virtual const QFont& getFont() const override;
+
+    virtual TextEdit& setFontColor4i(GLint red, GLint green, GLint blue, GLint alpha) override;
+
+    virtual const GLint* getFontColor() const override;
+
 private:
     Texture2D background;
-    //position in the text
-    unsigned cur_pos;
-    unsigned max_width;
+    //cursor position in the text
+    int cur_pos;
+    int max_width;
     //position in the render world
     GLdouble cur_world_pos;
     Label text;
     bool active;
+    bool hovered;
     GLRectangleCoord<GLint,2> pos;
-    GLRectangleCoord<GLint,2> crop_pos;
+    GLRectangleCoord<GLint,2> text_crop;
+    GLRectangleCoord<GLint,2> back_pos;
     void calcCrop();
 };
 
