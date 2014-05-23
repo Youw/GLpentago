@@ -216,4 +216,29 @@ void GLfont::renderText(GLfloat x, GLfloat y, const QString &text)
 //    glPopAttrib();
 }
 
+void GLfont::renderTextCroped(GLfloat x, GLfloat y, const QString &text, GLfloat x_left, GLfloat x_right) {
+    if(text.isEmpty()) return;
+    GLuint texture = 0;
+    GLRectangleCoord<GLfloat> char_pos(x,y);
+    for (int i = 0; i < text.length(); ++i)
+    {
+        CharData &c = d->createCharacter(text[i]);
+        if (texture != c.textureId)
+        {
+            texture = c.textureId;
+            glBindTexture(GL_TEXTURE_2D, texture);
+        }
+        char_pos.setSize(c.width,c.height);
+        if((char_pos.getLeft()>=x_left) && (char_pos.getRight()<=x_right)) {
+            glVertexPointer(char_pos.dimension, GL_FLOAT, 0, char_pos.glCoords());
+            glTexCoordPointer(2, GL_FLOAT, 0, c.pos.glCoords());
+            glDrawArrays(GL_TRIANGLE_FAN,0,4);
+          }
+
+        char_pos.setPos(char_pos.getLeft()+c.width,char_pos.getTop());
+    }
+
+    glPopMatrix();
+}
+
 } // namespace glutils

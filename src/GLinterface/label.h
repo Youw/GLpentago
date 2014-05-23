@@ -27,12 +27,7 @@ public:
   Label& setBackground(const Texture2D& texture);
 
   virtual void draw() const override;
-//  virtual void click() override;
-//  virtual void mouseDown(int pos_x, int pos_y) override;
-//  virtual void mouseUp(int pos_x, int pos_y) override;
-//  virtual void hover(int pos_x, int pos_y) override;
-//  virtual void unHover() override;
-//  virtual bool underMouse(int pos_x, int pos_y) override;
+  void drawCroped(int x_left, int x_right) const;
 
   //set and get position of baseline
   virtual void setPos(int x, int y) override;

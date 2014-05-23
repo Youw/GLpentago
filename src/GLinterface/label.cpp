@@ -55,6 +55,11 @@ void Label::draw() const {
   text_font->renderText(x_pos,y_pos,text);
 }
 
+void Label::drawCroped(int x_left, int x_right) const {
+  glColor4f(double(font_color[0])*INT_MAX,double(font_color[1])*INT_MAX,double(font_color[2])*INT_MAX,double(font_color[3])*INT_MAX);
+  text_font->renderTextCroped(x_pos,y_pos,text,x_left, x_right);
+}
+
 void Label::fontChanged() {
   this->text_width = text_font->fontMetrics().width(text);
 //  this->strike_out_pos = text_font->fontMetrics().strikeOutPos();

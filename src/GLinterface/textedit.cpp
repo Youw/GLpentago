@@ -8,7 +8,13 @@
 
 TextEdit::TextEdit(
     GLint x_left_top, GLint y_left_top, GLint width, GLint height, const Texture2D &background):
-  background(background),  max_width(-1), active(false), hovered(false), pos(x_left_top,y_left_top)  {
+    background(background),
+    text("localhost"),
+    active(false),
+    hovered(false),
+    pos(x_left_top,y_left_top),
+    cur_pos(text.width()),
+    max_width(-1)  {
 
   calcCrop();
   setCurPos(0);
@@ -67,6 +73,7 @@ TextEdit& TextEdit::setMaxTextLength(int length) {
 
 TextEdit& TextEdit::setText(const string& text) {
   this->text.setText(text);
+  setCurPos(text.length());
   return *this;
 }
 
@@ -102,7 +109,7 @@ void TextEdit::draw() const {
   glLineWidth(1);
   glVertexPointer(back_pos.dimension, GL_INT, 0, back_pos.glCoords());
   glDrawArrays(GL_LINE_LOOP,0,4);
-  text.draw();
+  text.drawCroped(back_pos.getLeft(),back_pos.getRight());
 }
 
 void TextEdit::setActive(bool act) {

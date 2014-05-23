@@ -39,6 +39,8 @@ RESOURCES += \
 
 CONFIG += c++11
 
+RC_FILE = pentago.rc
+
 OTHER_FILES += \
     android/AndroidManifest.xml
 

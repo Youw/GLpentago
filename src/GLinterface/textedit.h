@@ -66,10 +66,7 @@ public:
 
 private:
     Texture2D background;
-    //cursor position in the text
-    int cur_pos;
-    int max_width;
-    //position in the render world
+
     GLdouble cur_world_pos;
     Label text;
     bool active;
@@ -78,6 +75,11 @@ private:
     GLRectangleCoord<GLint,2> text_crop;
     GLRectangleCoord<GLint,2> back_pos;
     void calcCrop();
+
+    //cursor position in the text
+    int cur_pos;
+    int max_width;
+    //position in the render world
 };
 
 #endif // TEXTEDIT_H

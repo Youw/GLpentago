@@ -19,7 +19,7 @@
 GLview::GLview(QWidget *parent)
     : QGLWidget(parent)
 {
-  setWindowIcon(QIcon(":/window/pentago.ico"));
+//  setWindowIcon(QIcon(":/window/pentago.ico"));
   setMouseTracking(true);
   QDesktopWidget desktop;
   setGeometry(

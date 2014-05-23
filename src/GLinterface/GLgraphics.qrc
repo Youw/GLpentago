@@ -1,7 +1,4 @@
 <RCC>
-    <qresource prefix="/window">
-        <file>pentago.ico</file>
-    </qresource>
     <qresource prefix="/graphics">
         <file>background.jpg</file>
         <file>button_menu.jpg</file>
