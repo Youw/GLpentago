@@ -19,7 +19,8 @@ SOURCES += main.cpp\
     GLinterface/label.cpp \
     GLinterface/GLfontutils.cpp \
     GLinterface/menu.cpp \
-    GLinterface/textedit.cpp
+    GLinterface/textedit.cpp \
+    GLinterface/stone.cpp
 
 
 HEADERS  += glview.h \
@@ -32,7 +33,8 @@ HEADERS  += glview.h \
     GLinterface/fontkeeper.h \
     GLinterface/fontkeeperbase.h \
     GLinterface/textedit.h \
-    GLinterface/GLRectangleCoord.h
+    GLinterface/GLRectangleCoord.h \
+    GLinterface/stone.h
 
 RESOURCES += \
     GLinterface/GLgraphics.qrc
