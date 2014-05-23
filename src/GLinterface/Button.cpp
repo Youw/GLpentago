@@ -13,13 +13,13 @@ Button::Button(
                GLint height,
                const string& caption,
                const Texture2D& texture):
+    pos(x_left_top, y_left_top),
     text(caption),
     active(false),
     pressed(false),
     alpha_color_bak(INT_MAX) {
 
   setFontColor4d(0.0,0.0,0.0,1.0);
-  setPos(x_left_top, y_left_top);
   setSize(width,height);
   setTexture(texture);
   setFont(QFont("Snap ITC", height/2, 40, false));

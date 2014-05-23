@@ -42,8 +42,9 @@ CONFIG += c++11
 OTHER_FILES += \
     android/AndroidManifest.xml
 
-android: DEFINES += HAVE_GLES=true
-
-android: LIBS += -lGLESv1_CM
+android {
+ DEFINES += HAVE_GLES=true
+ LIBS += -lGLESv1_CM
+}
 
 ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android

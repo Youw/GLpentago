@@ -5,6 +5,8 @@
 #include <climits>
 
 #include "GLinterface/button.h"
+#include "GLinterface/label.h"
+#include "GLinterface/textedit.h"
 
 #if !defined(HAVE_GLES)
 #include <GL/gl.h>
@@ -92,7 +94,8 @@ void GLview::buildMenus() {
       .addObject(Label("Enter Host IP:",0,280, QFont("Snap ITC", 32, 40, false))
                 .setBackground(Texture2D(":/graphics/screwed_background.jpg",this->context()))
                 )
-      .addObject(Button(0,431,512,100,"Connect",button_texture))
+      .addObject(TextEdit(0,360,512,80,button_texture))
+      .addObject(Button(0,450,512,100,"Connect",button_texture))
       .addObject(Button(0,631,512,100,"Back",button_texture).setClickCallBack(
                    [&]() {
                        this->goMenuBack();
@@ -115,6 +118,8 @@ void GLview::goToMenu(Menu& menu) {
 }
 
 void GLview::initializeGL() {
+  qDebug() << "GL version: " << (char*)glGetString(GL_VERSION) << endl;
+
   glEnable(GL_TEXTURE_2D);
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

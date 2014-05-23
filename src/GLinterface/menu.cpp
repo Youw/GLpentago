@@ -127,13 +127,20 @@ void Menu::hover(int x, int y) {
       if(active_index!=i && menu_objects[i]->isActive()) {
         menu_objects[active_index]->setActive(false);
         active_index = i;
-      }
+      } else {
+          if (!menu_objects[i]->isActive())
+            menu_objects[i]->unHover();
+        }
     }
   }
 }
 
 void Menu::unHover() {
-
+//  for(auto o: menu_objects) {
+//    if (!o->isActive())
+//      o->unHover();
+//  }
+  //Do I really need this ? ...
 }
 
 bool Menu::underMouse(int x, int y) const {
@@ -149,9 +156,12 @@ static bool isActive(const std::shared_ptr<RenderObject>& o) {
 }
 
 void Menu::keyPress(int key, bool repeat, KeyboardModifier mod) {
-  if (key==Qt::Key_Tab) key = Qt::Key_Down; else
-  //Shift+Tab
-  if (key==Qt::Key_Backtab) key = Qt::Key_Up;
+  if (mod == MD_NONE) {
+    if (key==Qt::Key_Tab) key = Qt::Key_Down; else
+    //Shift+Tab
+    if (key==Qt::Key_Backtab) key = Qt::Key_Up;
+  }
+
   unsigned find_count = menu_objects.size();
   if(!find_count) return;
   switch (key) {
