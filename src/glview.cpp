@@ -274,8 +274,7 @@ void GLview::mouseReleaseEvent ( QMouseEvent * event ) {
 }
 
 void GLview::mouseDoubleClickEvent ( QMouseEvent * event ) {
-    setWindowState(windowState() ^ Qt::WindowFullScreen);
-    event->accept();
+  (void)event;
 }
 
 void GLview::mouseMoveEvent(QMouseEvent* event) {
@@ -315,23 +314,35 @@ void GLview::keyPressEvent(QKeyEvent * e)
     }
   }
   glMatrixMode( GL_PROJECTION );
+  switch(e->key()) {
 #ifdef QT_DEBUG
-    if(e->key() == Qt::Key_T) {
-      glRotatef(angle+0.1*(count/10), 1,1,0);
-      count++;
-    }
-    if(e->key() == Qt::Key_Y) {
-      count=0;
-    }
+    case Qt::Key_T: {
+        glRotatef(angle+0.1*(count/10), 1,1,0);
+        count++;
+
+      }
+    case Qt::Key_Y: {
+        count=0;
+        break;
+      }
 #endif
-    if(e->key() == Qt::Key_A) {
-      glRotatef(0.5, 1,0,0);
-    }
-    if(e->key() == Qt::Key_Z) {
-      glRotatef(0.5, 0,1,0);
-    }
-    if(e->key() == Qt::Key_Q) {
-      glRotatef(0.5, 0,0,1);
+    case Qt::Key_A: {
+        glRotatef(0.5, 1,0,0);
+        break;
+      }
+    case Qt::Key_Z: {
+        glRotatef(0.5, 0,1,0);
+        break;
+      }
+    case Qt::Key_Q: {
+        glRotatef(0.5, 0,0,1);
+        break;
+      }
+    case Qt::Key_Return: {
+        if (e->modifiers()==Qt::AltModifier) {
+            setWindowState(windowState() ^ Qt::WindowFullScreen);
+          }
+      }
     }
     glMatrixMode( GL_MODELVIEW );
     updateGL();
