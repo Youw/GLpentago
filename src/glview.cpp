@@ -129,13 +129,30 @@ void GLview::initializeGL() {
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glEnableClientState(GL_VERTEX_ARRAY);
   glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+//  glEnable(GL_DEPTH_TEST);
 
   Button::texture_blurr.load(":/graphics/glass_blurred.jpg",this->context());
   menu_background_texture.load(":/graphics/background.jpg",this->context());
 
   buildMenus();
 
-  current_objects.push_back(&main_menu );  
+  stone = Stone(100,100,200,Texture2D(":/graphics/stone.png",this->context()));
+
+  current_objects.push_back(&main_menu );
+  current_objects.push_back(&stone);
+
+//  glEnable(GL_LIGHTING);
+//  glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+//  glEnable(GL_NORMALIZE);
+
+//  float light0_diffuse[] = {1, 1, 1};
+//  float light0_direction[] = {0.0, 1, 1.0, 0.0};
+
+//  glEnable(GL_LIGHT0);
+
+//  glLightfv(GL_LIGHT0, GL_DIFFUSE, light0_diffuse);
+//  glLightfv(GL_LIGHT0, GL_POSITION, light0_direction);
+//  glNormal3f(0.0, -1, -1.0);
 }
 
 void GLview::resizeGL(int w, int h) {
@@ -162,22 +179,9 @@ void GLview::resizeGL(int w, int h) {
 }
 
 void GLview::paintGL() {
-  glClear(GL_COLOR_BUFFER_BIT); // чистим буфер
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // чистим буфер
   glColor4f(1,1,1,1);
   drawBackground(menu_background_texture);
-
-//  glBegin(GL_POLYGON);
-//    glColor4f(1,0,0, 0.25);
-//    glVertex2f(0, 0);
-//    glColor4f(0,1,0, 1);
-//    glVertex2f(512, 0);
-//    glColor4f(0,0,1, 0.25);
-//    glVertex2f(1024, 1024);
-//    glColor4f(0,1,0, 1);
-//    glVertex2f(0, 512);
-//  glEnd();
-
-  //glColor3(1,1,1);
 
   for(auto o: current_objects) {
     o->draw();
@@ -214,10 +218,12 @@ void GLview::drawBackground(Texture2D& texture) {
   float window_ratio = width/float(height);
   if(window_ratio>back_ratio) {
     float tmp = (window_ratio/back_ratio*height-height)/2;
-    texture.draw(point(0,-tmp),point(width,height+tmp));
+    texture.draw({GLint(0)    ,GLint(-tmp)},
+                 {GLint(width),GLint(height+tmp)});
   } else {
     float tmp = (back_ratio/window_ratio*width-width)/2;
-    texture.draw(point(-tmp,0),point(width+tmp,height));
+    texture.draw({GLint(-tmp)     ,GLint(0)},
+                 {GLint(width+tmp),GLint(height)});
   }
   glPopMatrix();
   glMatrixMode( GL_MODELVIEW );

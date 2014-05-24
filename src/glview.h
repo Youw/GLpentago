@@ -6,6 +6,7 @@
 #include "GLinterface/textures.h"
 #include "GLinterface/renderobject.h"
 #include "GLinterface/menu.h"
+#include "GLinterface/stone.h"
 
 #include <vector>
 #include <stack>
@@ -53,6 +54,7 @@ private:
     void goMenuBack();
     void goToMenu(Menu& manu);
 
+    Stone stone;
 
     std::vector<RenderObject*> current_objects;
 
