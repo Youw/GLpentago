@@ -20,7 +20,8 @@ SOURCES += main.cpp\
     GLinterface/GLfontutils.cpp \
     GLinterface/menu.cpp \
     GLinterface/textedit.cpp \
-    GLinterface/stone.cpp
+    GLinterface/stone.cpp \
+    GLinterface/pentagoboard.cpp
 
 
 HEADERS  += glview.h \
@@ -34,7 +35,8 @@ HEADERS  += glview.h \
     GLinterface/fontkeeperbase.h \
     GLinterface/textedit.h \
     GLinterface/GLRectangleCoord.h \
-    GLinterface/stone.h
+    GLinterface/stone.h \
+    GLinterface/pentagoboard.h
 
 RESOURCES += \
     GLinterface/GLgraphics.qrc
