@@ -189,10 +189,6 @@ void GLview::paintGL() {
   }
 
 #ifdef QT_DEBUG
-  glColor4f(1,1,1,1);
-  renderText(100,100,0.0,QString("Press and hold T or press Y %1").arg(count));
-#endif
-
 #ifndef HAVE_GLES
   glColor4f(0.15,0.63,0.02,1);
   renderText(20,20,QString("Mouse pos: X:%1 Y:%2").arg(m_x).arg(m_y));
@@ -200,8 +196,11 @@ void GLview::paintGL() {
   renderText(20,50,QString("X:%1").arg(m_w.x));
   renderText(20,60,QString("Y:%1").arg(m_w.y));
   renderText(20,70,QString("Z:%1").arg(m_w.z));
+  renderText(20,80,QString("Press and hold T or press Y %1").arg(count));
 #else
     qDebug() << (const char *)glGetString(GL_VERSION) << QString("\nMouse pos: X:%1 Y:%2").arg(m_x).arg(m_y);
+#endif
+
 #endif
 }
 
@@ -326,7 +325,7 @@ void GLview::keyPressEvent(QKeyEvent * e)
     case Qt::Key_T: {
         glRotatef(angle+0.1*(count/10), 1,1,0);
         count++;
-
+        break;
       }
     case Qt::Key_Y: {
         count=0;

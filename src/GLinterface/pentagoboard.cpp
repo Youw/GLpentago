@@ -5,14 +5,16 @@
 
 #define STONE_SIZE_TO_QUADRANT  0.2031
 #define STONE_SPASE_TO_QUADRANT 0.1415
-#define STONE_SPACE_BEGIN       0.537
-#define QUADRANTS_SPACE
+#define STONE_SPACE_BEGIN       0.0537
+#define QUADRANTS_SPACE         0.0340
 
 
 
 #include <array>
+#include <vector>
 
 using std::array;
+using std::vector;
 
 class BoardQuadrant: public RenderObject {
   GLRectangleCoord<GLint> pos;
@@ -167,7 +169,7 @@ private:
 
     for (unsigned i=0; i< stones.size(); i++) {
         for(unsigned j=0; j< stones[i].size(); j++) {
-            stones[i][j].setPos(pos.posX()+pos.width()*(hh+i*(H+h)),pos.posY()+pos.height()*(hh+i*(H+h)));
+            stones[i][j].setPos(pos.posX()+pos.width()*(hh+i*(H+h)),pos.posY()+pos.height()*(hh+j*(H+h)));
             stones[i][j].setSize(pos.width()*H,pos.height()*H);
           }
       }
@@ -179,7 +181,7 @@ class PentagoBoardImpl: public RenderObject {
   bool active;
   std::function<StoneSetCallBack> set_call_back;
   std::function<RotateCallBack> rotate_call_back;
-  BoardQuadrant k;
+  vector<vector<BoardQuadrant>> quadrants;
 
 public:
   PentagoBoardImpl(GLint x_left_top = 0,
@@ -188,13 +190,14 @@ public:
         GLint height = 0,
         int board_size = 2):
       pos(x_left_top, y_left_top, width, height),
-      active(false) {
-    k.setPos(100,100);
-    k.setSize(512,512);
+      active(false),
+      quadrants(board_size,vector<BoardQuadrant>(board_size)){
+        reposQuadrants();
   }
 
   void setSize(int width, int height) {
     pos.setSize(width,height);
+    reposQuadrants();
   }
 
   void setStone(int x_pos, int y_pos) {
@@ -237,7 +240,11 @@ public:
     glBindTexture(GL_TEXTURE_2D,0);
     glVertexPointer(pos.dimension, GL_INT, 0, pos.glCoords());
     glDrawArrays(GL_TRIANGLE_FAN,0,4);
-    k.draw();
+    for(auto& i: quadrants) {
+        for(auto& o: i) {
+            o.draw();
+          }
+      }
   }
 
   virtual void setActive(bool active) override {
@@ -253,22 +260,49 @@ public:
   }
 
   virtual void click(int x, int y) override {
-
+    for(auto& i: quadrants) {
+        for(auto& o: i) {
+            if(o.underMouse(x,y)) {
+                o.click(x,y);
+              }
+          }
+      }
   }
 
   virtual void mouseDown(int x, int y) override {
-
+    for(auto& i: quadrants) {
+        for(auto& o: i) {
+            if(o.underMouse(x,y)) {
+                o.mouseDown(x,y);
+              }
+          }
+      }
   }
 
   virtual void mouseUp(int x, int y) override {
-
+    for(auto& i: quadrants) {
+        for(auto& o: i) {
+            o.mouseUp(x,y);
+          }
+      }
   }
 
   virtual void hover(int x, int y) override {
-
+    for(auto& i: quadrants) {
+        for(auto& o: i) {
+            if(o.underMouse(x,y)) {
+                o.hover(x,y);
+              }
+          }
+      }
   }
 
   virtual void unHover() override {
+    for(auto& i: quadrants) {
+        for(auto& o: i) {
+              o.unHover();
+          }
+      }
 
   }
 
@@ -278,6 +312,7 @@ public:
 
   virtual void setPos(int x, int y) override {
     pos.setPos(x,y);
+    reposQuadrants();
   }
 
   virtual int posX() const override {
@@ -306,6 +341,23 @@ public:
   virtual void keyRelease(int key, KeyboardModifier mod) override {
     (void)key;
     (void)mod;
+  }
+private:
+  void reposQuadrants() {
+    double dx = pos.width()/(1/QUADRANTS_SPACE+(quadrants.size()-1)*(1+1/QUADRANTS_SPACE));
+    double w = (pos.width()-dx*(quadrants.size()-1))/quadrants.size();
+    double x = pos.posX();
+    for(unsigned int i = 0; i<quadrants.size(); i++) {
+        double y = pos.posY();
+        double dy = pos.height()/(1/QUADRANTS_SPACE+(quadrants[0].size()-1)*(1+1/QUADRANTS_SPACE));
+        double h = (pos.height()-dy*(quadrants[i].size()-1))/quadrants[i].size();
+        for(unsigned int j = 0; j<quadrants[i].size(); j++) {
+            quadrants[i][j].setPos(x,y);
+            quadrants[i][j].setSize(std::round(w),std::round(h));
+            y+=h+dy;
+          }
+        x+=w+dx;
+      }
   }
 
 };//class PentagoBoardImpl
