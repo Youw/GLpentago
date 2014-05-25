@@ -137,10 +137,10 @@ void GLview::initializeGL() {
 
   buildMenus();
 
-  board = PentagoBoard(12,12,1000,1000);
+  board = new PentagoBoard(12,12,1000,1000);
 
 //  current_objects.push_back(&main_menu );
-  current_objects.push_back(&board);
+  current_objects.push_back(board);
 
 //  glEnable(GL_LIGHTING);
 //  glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
