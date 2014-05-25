@@ -37,6 +37,8 @@ public:
   template<typename ObjectType>
   Menu& addObject(const ObjectType& object);
 
+  std::shared_ptr<RenderObject> getMenuObject(unsigned index);
+
   virtual void draw() const override;
 
   virtual void setActive(bool active) override { this->active=active; }
@@ -91,6 +93,7 @@ Menu& Menu::addObject(const RenderObjectType& object) {
   return *this;
 }
 
+//just tittle adaptor
 class MenuItemResponser {
   unsigned index;
 public:

@@ -137,10 +137,14 @@ void GLview::initializeGL() {
 
   buildMenus();
 
-  board = new PentagoBoard(12,12,1000,1000);
+  board.reset(new PentagoBoard(12,12,1000,1000,2));
+
+  board->setStoneSetCallBack([&] (int x, int y) {
+      qDebug() << "Stone clicked at: x =" <<x<<"; y ="<<y<<".";
+    });
 
 //  current_objects.push_back(&main_menu );
-  current_objects.push_back(board);
+  current_objects.push_back(&*board);
 
 //  glEnable(GL_LIGHTING);
 //  glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
@@ -198,7 +202,7 @@ void GLview::paintGL() {
   renderText(20,70,QString("Z:%1").arg(m_w.z));
   renderText(20,80,QString("Press and hold T or press Y %1").arg(count));
 #else
-    qDebug() << (const char *)glGetString(GL_VERSION) << QString("\nMouse pos: X:%1 Y:%2").arg(m_x).arg(m_y);
+  qDebug() << QString("\nMouse pos: X:%1 Y:%2").arg(m_x).arg(m_y);
 #endif
 
 #endif
@@ -226,7 +230,7 @@ void GLview::drawBackground(Texture2D& texture) {
                  {GLint(width+tmp),GLint(height)});
   }
   glPopMatrix();
-  glMatrixMode( GL_MODELVIEW );
+  glMatrixMode(GL_MODELVIEW);
 }
 
 GLview::Point3D GLview::unProject(int x, int y) {
@@ -310,8 +314,7 @@ void GLview::leaveEvent(QEvent * event) {
 
 
 
-void GLview::keyPressEvent(QKeyEvent * e)
-{
+void GLview::keyPressEvent(QKeyEvent * e) {
   for(auto o: current_objects) {
     if (o->isActive()) {
       o->keyPress(e->key(),e->isAutoRepeat(),KeyboardModifier(int(e->modifiers())));

@@ -7,7 +7,7 @@
 #define STONE_SPASE_TO_QUADRANT 0.1415
 #define STONE_SPACE_BEGIN       0.0537
 #define QUADRANTS_SPACE         0.0340
-
+#define BACKGROUND_SPACE        0.104
 
 
 #include <array>
@@ -17,31 +17,54 @@ using std::array;
 using std::vector;
 
 class BoardQuadrant: public RenderObject {
+public:
+  static const unsigned QUADRANT_SIZE = 3;
+private:
+  PentagoBoard* parent;
+
   GLRectangleCoord<GLint> pos;
   GLdouble angle;
   GLint dx,dy;
-  PentagoBoard* parent;
   int my_pos_x, my_pos_y;
   int active_x, active_y;
-  array<array<Stone,3>,3> stones;
+  array<array<Stone,QUADRANT_SIZE>,QUADRANT_SIZE> stones;
 public:
 
-  BoardQuadrant(GLint x_left_top = 0,
+  BoardQuadrant(PentagoBoard* parent,
+                const Texture2D& texture = Texture2D(),
+                GLint x_left_top = 0,
                 GLint y_left_top = 0,
                 GLint width = 0,
-                GLint height = 0,
-                int my_pos_x = 0,
-                int my_pos_y = 0,
-                const Texture2D& texture = Texture2D()):
+                GLint height = 0):
       pos(x_left_top, y_left_top, width, height),
       angle(0), dx(0), dy(0),
-      my_pos_x(my_pos_x), my_pos_y(my_pos_y),
+      my_pos_x(0), my_pos_y(0),
       active_x(-1), active_y(-1) {
     (void)texture;
     reposStones();
+    setParent(parent);
     for (auto& i: stones) {
         for (auto& o: i) {
             o.setTexture(Texture2D(":/graphics/stone.png"));
+          }
+      }
+  }
+
+  void setPosOnBoard(int pos_x, int pos_y) {
+    my_pos_x = pos_x;
+    my_pos_y = pos_y;
+    setParent(parent);
+  }
+
+  void setParent(PentagoBoard* parent) {
+    this->parent = parent;
+    for (unsigned i=0; i< stones.size(); i++) {
+        for(unsigned j=0; j< stones[i].size(); j++) {
+            stones[i][j].setClickCallBack([=] () {
+                parent->callStoneSetCallBack(
+                      my_pos_x*BoardQuadrant::QUADRANT_SIZE+i,
+                      my_pos_y*BoardQuadrant::QUADRANT_SIZE+j);
+              });
           }
       }
   }
@@ -51,8 +74,69 @@ public:
     reposStones();
   }
 
+  void setStone(int x_pos, int y_pos) {
+    stones[x_pos][y_pos].setSetted(true);
+  }
+
+  void unsetStone(int x_pos, int y_pos) {
+    stones[x_pos][y_pos].setSetted(false);
+  }
+
+  void  setActiveStone(int pos_x, int pos_y) {
+    if(isActive()) {
+        stones[active_x][active_y].unHover();
+      }
+    active_x = pos_x;
+    active_y = pos_y;
+    if((active_x>=0) & (active_y>=0)) {
+        Stone& s = stones[active_x][active_y];
+        s.hover(s.posX()+s.width()/2,s.posY()+s.posY()/2);
+      }
+  }
+
+  void setStoneColor(int x_pos, int y_pos, GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha) {
+    stones[x_pos][y_pos].setColor(red,green,blue,alpha);
+  }
+
+  void rotate(bool  right_direction) {
+    stones[active_x][active_y].setActive(false);
+    Stone tmp = stones[0][0];
+    if(right_direction) {
+        stones[0][0] = stones[0][1];
+        stones[0][1] = stones[0][2];
+        stones[0][2] = stones[1][2];
+        stones[1][2] = stones[2][2];
+        stones[2][2] = stones[2][1];
+        stones[2][1] = stones[2][0];
+        stones[2][0] = stones[1][0];
+        stones[1][0] = tmp;
+      } else {
+        stones[0][0] = stones[1][0];
+        stones[1][0] = stones[2][0];
+        stones[2][0] = stones[2][1];
+        stones[2][1] = stones[2][2];
+        stones[2][2] = stones[1][2];
+        stones[1][2] = stones[0][2];
+        stones[0][2] = stones[0][1];
+        stones[0][1] = tmp;
+      }
+    stones[active_x][active_y].setActive(true);
+  }
+
+  void unHoverStone() {
+    setActiveStone(-1,-1);
+  }
+
+  int activeX() const {
+    return active_x;
+  }
+
+  int activeY() const {
+    return active_y;
+  }
+
   void draw() const {
-    glColor4f(1,0,0,1);
+    glColor4f(0.5,0,0,1);
     glBindTexture(GL_TEXTURE_2D,0);
     glVertexPointer(pos.dimension, GL_INT, 0, pos.glCoords());
     glDrawArrays(GL_TRIANGLE_FAN,0,4);
@@ -65,7 +149,7 @@ public:
 
   virtual void setActive(bool active) override {
     if(!active) {
-        unHover();
+        unHoverStone();
       }
   }
 
@@ -76,7 +160,7 @@ public:
   }
 
   virtual bool isActive() const override {
-    return (active_x!=-1)&(active_y!=0);
+    return (active_x>=0)&(active_y>=0);
   }
 
   virtual bool canBeActive() const override {
@@ -104,23 +188,23 @@ public:
   void hover(int x, int y) override {
     for (unsigned i=0; i< stones.size(); i++) {
         for(unsigned j=0; j< stones[i].size(); j++) {
-            if (stones[i][j].underMouse(x,y)) {
-                stones[i][j].hover(x,y);
-                if(isActive()) {
-                    stones[active_x][active_y].unHover();
-                  }
-                active_x = i;
-                active_y = j;
-                return;
+            if(active_x!=(int)i || active_y!=(int)j) {
+              if (stones[i][j].underMouse(x,y)) {
+                  stones[i][j].hover(x,y);
+                  if(isActive()) {
+                      stones[active_x][active_y].unHover();
+                    }
+                  active_x = i;
+                  active_y = j;
+                  return;
+                }
               }
           }
       }
   }
 
   void unHover() override {
-    stones[active_x][active_y].unHover();
-    active_x = -1;
-    active_y = -1;
+
   }
 
   bool underMouse(int x, int y) const override {
@@ -177,22 +261,43 @@ private:
 }; //board quadrant
 
 class PentagoBoardImpl: public RenderObject {
+  PentagoBoard *parent;
   GLRectangleCoord<GLint> pos;
+  GLRectangleCoord<GLint> background_pos;
   bool active;
   std::function<StoneSetCallBack> set_call_back;
   std::function<RotateCallBack> rotate_call_back;
   vector<vector<BoardQuadrant>> quadrants;
 
+  int active_x, active_y;
 public:
-  PentagoBoardImpl(GLint x_left_top = 0,
-        GLint y_left_top = 0,
-        GLint width = 0,
-        GLint height = 0,
-        int board_size = 2):
+  PentagoBoardImpl(PentagoBoard *parent,
+                   GLint x_left_top = 0,
+                   GLint y_left_top = 0,
+                   GLint width = 0,
+                   GLint height = 0,
+                   int board_size = 2):
+      parent(parent),
       pos(x_left_top, y_left_top, width, height),
       active(false),
-      quadrants(board_size,vector<BoardQuadrant>(board_size)){
+      quadrants(board_size,vector<BoardQuadrant>(board_size,BoardQuadrant(parent))),
+      active_x(0), active_y(0) {
+        for (int i=0; i<board_size; i++) {
+            for (int j=0; j<board_size; j++) {
+                quadrants[i][j].setPosOnBoard(i,j);
+              }
+          }
         reposQuadrants();
+        quadrants[0][0].setActiveStone(0,0);
+  }
+
+  void setParent(PentagoBoard *parent) {
+    this->parent = parent;
+    for(auto& i: quadrants) {
+        for(auto& o: i) {
+            o.setParent(parent);
+          }
+      }
   }
 
   void setSize(int width, int height) {
@@ -200,20 +305,20 @@ public:
     reposQuadrants();
   }
 
-  void setStone(int x_pos, int y_pos) {
-
+  void setStoneColor(int x_pos, int y_pos, GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha) {
+    quadrants[x_pos/3][y_pos/3].setStoneColor(x_pos%3,y_pos%3,red,green,blue,alpha);
   }
 
-  void setStoneColor(int x_pos, int y_pos, GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha) {
-
+  void setStone(int x_pos, int y_pos) {
+    quadrants[x_pos/3][y_pos/3].setStone(x_pos%3,y_pos%3);
   }
 
   void unsetStone(int x_pos, int y_pos) {
-
+    quadrants[x_pos/3][y_pos/3].unsetStone(x_pos%3,y_pos%3);
   }
 
   void rotate(int board_x, int board_y, bool  right_direction) {
-
+    quadrants[board_x/3][board_y/3].rotate(right_direction);
   }
 
   void setRotateCallBack(std::function<RotateCallBack> rotate_call_back) {
@@ -231,14 +336,14 @@ public:
 
   void callStoneSetCallBack(int pos_x, int pos_y) const {
     if(set_call_back) {
-        set_call_back(pos_y,pos_y);
+        set_call_back(pos_x,pos_y);
       }
   }
 
   virtual void draw() const override {
     glColor4f(0.7,0.7,0.7,1);
     glBindTexture(GL_TEXTURE_2D,0);
-    glVertexPointer(pos.dimension, GL_INT, 0, pos.glCoords());
+    glVertexPointer(background_pos.dimension, GL_INT, 0, background_pos.glCoords());
     glDrawArrays(GL_TRIANGLE_FAN,0,4);
     for(auto& i: quadrants) {
         for(auto& o: i) {
@@ -270,6 +375,9 @@ public:
   }
 
   virtual void mouseDown(int x, int y) override {
+    if(underMouse(x,y)) {
+        setActive(true);
+      }
     for(auto& i: quadrants) {
         for(auto& o: i) {
             if(o.underMouse(x,y)) {
@@ -288,10 +396,19 @@ public:
   }
 
   virtual void hover(int x, int y) override {
-    for(auto& i: quadrants) {
-        for(auto& o: i) {
-            if(o.underMouse(x,y)) {
-                o.hover(x,y);
+    for(unsigned i = 0; i<quadrants.size(); i++) {
+        for(unsigned j = 0; j<quadrants[i].size(); j++) {
+            if(quadrants[i][j].underMouse(x,y)) {
+                quadrants[i][j].hover(x,y);
+                if(quadrants[i][j].isActive()) {
+                    if((active_x!=(int)i)|(active_y!=(int)j)) {
+                        quadrants[active_x][active_y].unHoverStone();
+                        quadrants[active_x][active_y].unHover();
+                        active_x = i;
+                        active_y = j;
+                        return;
+                      }
+                  }
               }
           }
       }
@@ -334,7 +451,65 @@ public:
   virtual void keyPress(int key, bool repeat, KeyboardModifier mod) override {
     (void)repeat;
     if(mod == MD_NONE) {
-        (void)key;
+        BoardQuadrant& a_q = quadrants[active_x][active_y];
+        switch(key) {
+          case Qt::Key_Left: {
+              if(a_q.activeX()==0) {
+                  if(active_x) {
+                      --active_x;
+                    } else {
+                      active_x = quadrants.size()-1;
+                    }
+                  quadrants[active_x][active_y].setActiveStone(2,a_q.activeY());
+                  a_q.unHoverStone();
+                } else {
+                  a_q.setActiveStone(a_q.activeX()-1,a_q.activeY());
+                }
+              break;
+            }
+          case Qt::Key_Right: {
+              if(a_q.activeX()==BoardQuadrant::QUADRANT_SIZE-1) {
+                  if(active_x<int(quadrants.size()-1)) {
+                      ++active_x;
+                    } else {
+                      active_x = 0;
+                    }
+                  quadrants[active_x][active_y].setActiveStone(0,a_q.activeY());
+                  a_q.unHoverStone();
+                } else {
+                  a_q.setActiveStone(a_q.activeX()+1,a_q.activeY());
+                }
+              break;
+            }
+          case Qt::Key_Up: {
+              if(a_q.activeY()==0) {
+                  if(active_y) {
+                      --active_y;
+                    } else {
+                      active_y = quadrants[active_x].size()-1;
+                    }
+                  quadrants[active_x][active_y].setActiveStone(a_q.activeX(),2);
+                  a_q.unHoverStone();
+                } else {
+                  a_q.setActiveStone(a_q.activeX(),a_q.activeY()-1);
+                }
+              break;
+            }
+          case Qt::Key_Down: {
+              if(a_q.activeY()==BoardQuadrant::QUADRANT_SIZE-1) {
+                  if(active_y<int(quadrants[active_x].size()-1)) {
+                      ++active_y;
+                    } else {
+                      active_y = 0;
+                    }
+                  quadrants[active_x][active_y].setActiveStone(a_q.activeX(),0);
+                  a_q.unHoverStone();
+                } else {
+                  a_q.setActiveStone(a_q.activeX(),a_q.activeY()+1);
+                }
+              break;
+            }
+          }
       }
   }
 
@@ -347,10 +522,19 @@ private:
     double dx = pos.width()/(1/QUADRANTS_SPACE+(quadrants.size()-1)*(1+1/QUADRANTS_SPACE));
     double w = (pos.width()-dx*(quadrants.size()-1))/quadrants.size();
     double x = pos.posX();
+
+    double dy = pos.height()/(1/QUADRANTS_SPACE+(quadrants[0].size()-1)*(1+1/QUADRANTS_SPACE));
+    double h = (pos.height()-dy*(quadrants[0].size()-1))/quadrants[0].size();
+
+    double dw = w*BACKGROUND_SPACE;
+    double dh = h*BACKGROUND_SPACE;
+    background_pos = decltype(background_pos)
+        (pos.posX()+dw,pos.posY()+dh,pos.width()-2*dw,pos.height()-2*dh);
+
     for(unsigned int i = 0; i<quadrants.size(); i++) {
-        double y = pos.posY();
-        double dy = pos.height()/(1/QUADRANTS_SPACE+(quadrants[0].size()-1)*(1+1/QUADRANTS_SPACE));
+        double dy = pos.height()/(1/QUADRANTS_SPACE+(quadrants[i].size()-1)*(1+1/QUADRANTS_SPACE));
         double h = (pos.height()-dy*(quadrants[i].size()-1))/quadrants[i].size();
+        double y = pos.posY();
         for(unsigned int j = 0; j<quadrants[i].size(); j++) {
             quadrants[i][j].setPos(x,y);
             quadrants[i][j].setSize(std::round(w),std::round(h));
@@ -363,7 +547,7 @@ private:
 };//class PentagoBoardImpl
 
 PentagoBoard::PentagoBoard(GLint x_left_top, GLint y_left_top, GLint width, GLint height, int board_size):
-    impl(new PentagoBoardImpl(x_left_top,y_left_top,width, height,board_size)) { }
+    impl(new PentagoBoardImpl(this,x_left_top,y_left_top,width, height,board_size)) { }
 
 PentagoBoard::~PentagoBoard() {
   delete impl;
@@ -372,11 +556,13 @@ PentagoBoard::~PentagoBoard() {
 PentagoBoard::PentagoBoard(const PentagoBoard& rigth) {
   delete impl;
   impl = new PentagoBoardImpl(*rigth.impl);
+  impl->setParent(this);
 }
 
 PentagoBoard& PentagoBoard::operator=(const PentagoBoard& rigth) {
   delete impl;
   impl = new PentagoBoardImpl(*rigth.impl);
+  impl->setParent(this);
   return *this;
 }
 
@@ -407,19 +593,21 @@ PentagoBoard& PentagoBoard::rotate(int board_x, int board_y, bool  right_directi
 }
 
 PentagoBoard& PentagoBoard::setRotateCallBack(std::function<RotateCallBack> rotate_call_back) {
-
+  impl->setRotateCallBack(rotate_call_back);
+  return *this;
 }
 
-PentagoBoard& PentagoBoard::callRotateCallBack(int quadrant_x, int quadrant_y, bool rotate_right) const {
-
+void PentagoBoard::callRotateCallBack(int quadrant_x, int quadrant_y, bool rotate_right) const {
+  impl->callRotateCallBack(quadrant_x,quadrant_y,rotate_right);
 }
 
 PentagoBoard& PentagoBoard::setStoneSetCallBack(std::function<StoneSetCallBack> stone_set_call_back) {
-
+  impl->setStoneSetCallBack(stone_set_call_back);
+  return *this;
 }
 
-PentagoBoard& PentagoBoard::callStoneSetCallBack(int pos_x, int pos_y) const {
-
+void PentagoBoard::callStoneSetCallBack(int pos_x, int pos_y) const {
+  impl->callStoneSetCallBack(pos_x,pos_y);
 }
 
 void PentagoBoard::draw() const {

@@ -26,21 +26,45 @@ Stone& Stone::setSetted(bool set) {
   return *this;
 }
 
+Stone& Stone::setColor(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha) {
+  color[0] = red;
+  color[1] = green;
+  color[2] = blue;
+  color[3] = alpha;
+  return *this;
+}
+
 Stone& Stone::setTexture(const Texture2D& txtr) {
   texture = txtr;
+  return *this;
+}
+
+Stone& Stone::setClickCallBack(const std::function<void()>& call_back) {
+  click_call_back = call_back;
   return *this;
 }
 
 void Stone::draw() const {
   float alpha_index = active&!setted?0.75:active&setted?1:setted?1:0.9;
   float color_index = active&setted?0.9:1;
-  glColor4f(
+  if(active&!setted) {
+      glColor4f(0.2,0.2,0.2,1);
+    } else {
+    glColor4f(
       color[0]*color_index,
       color[1]*color_index,
       color[2]*color_index,
       color[3]*alpha_index*(pressed?0.9:1));
-
+  }
   texture.draw(pos.glCoords(),pos.dimension);
+}
+
+void Stone::click(int x, int y) {
+  (void)x;
+  (void)y;
+  if(click_call_back) {
+      click_call_back();
+    }
 }
 
 void Stone::mouseDown(int x, int y) {
@@ -52,6 +76,9 @@ void Stone::mouseDown(int x, int y) {
 void Stone::mouseUp(int x, int y) {
   (void)x;
   (void)y;
+  if(underMouse(x,y)) {
+      click(x,y);
+    }
   pressed = false;
 }
 
@@ -68,7 +95,7 @@ void Stone::unHover() {
 #define SQR(x) (x)*(x)
 
 bool Stone::underMouse(int x, int y) const {
-  return std::sqrt(SQR(pos.posXcenter()-x)+SQR(pos.posYcenter()-y))<std::sqrt(pos.width()*pos.height())/2.0;
+  return SQR(float(pos.posXcenter()-x)/(pos.width()/2.0))+SQR(float(pos.posYcenter()-y)/(pos.height()/2.0))<1;
 }
 
 void Stone::setPos(int x, int y) {

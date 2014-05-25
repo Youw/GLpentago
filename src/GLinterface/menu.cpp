@@ -35,6 +35,10 @@ Menu& Menu::setActiveIndex(int index) {
   return *this;
 }
 
+std::shared_ptr<RenderObject> Menu::getMenuObject(unsigned index) {
+    return menu_objects[index];
+}
+
 void Menu::draw() const {
 
   GLdouble sx = pos.width(),sy = pos.height();

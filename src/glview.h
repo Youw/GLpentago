@@ -54,7 +54,7 @@ private:
     void goMenuBack();
     void goToMenu(Menu& manu);
 
-    PentagoBoard* board;
+    std::shared_ptr<PentagoBoard> board;
 
     std::vector<RenderObject*> current_objects;
 

@@ -5,6 +5,8 @@
 #include "GLRectangleCoord.h"
 #include "textures.h"
 
+#include <functional>
+
 #ifndef HAVE_GLES
 #include <GL/gl.h>
 #else
@@ -24,7 +26,11 @@ public:
   bool isSetted() const { return setted; }
   Stone& setSetted(bool set);
 
+  Stone& setColor(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
+
   Stone& setTexture(const Texture2D& texture = Texture2D());
+
+  Stone& setClickCallBack(const std::function<void()>& call_back);
 
   virtual void draw() const override;
 
@@ -32,7 +38,7 @@ public:
   virtual bool isActive() const { return active; }
   virtual bool canBeActive() const { return true; }
 
-//  virtual void click(int x, int y) override;
+  virtual void click(int x, int y) override;
   virtual void mouseDown(int x, int y) override;
   virtual void mouseUp(int x, int y) override;
   virtual void hover(int x, int y) override;
@@ -53,6 +59,8 @@ private:
 
   GLRectangleCoord<GLint,2> pos;
   Texture2D texture;
+
+  std::function<void()> click_call_back;
 };
 
 #endif // STONE_H

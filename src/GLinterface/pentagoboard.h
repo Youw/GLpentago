@@ -31,16 +31,17 @@ public:
   PentagoBoard& operator=(const PentagoBoard& rigth);
 
   PentagoBoard& setSize(int width, int height);
+
   PentagoBoard& setStone(int x_pos, int y_pos);
-  PentagoBoard& setStoneColor(int x_pos, int y_pos, GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
   PentagoBoard& unsetStone(int x_pos, int y_pos);
+  PentagoBoard& setStoneColor(int x_pos, int y_pos, GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
   PentagoBoard& rotate(int board_x, int board_y, bool  right_direction);
 
   PentagoBoard& setRotateCallBack(std::function<RotateCallBack> rotate_call_back);
-  PentagoBoard& callRotateCallBack(int quadrant_x, int quadrant_y, bool rotate_right) const;
+  void callRotateCallBack(int quadrant_x, int quadrant_y, bool rotate_right) const;
 
   PentagoBoard& setStoneSetCallBack(std::function<StoneSetCallBack> stone_set_call_back);
-  PentagoBoard& callStoneSetCallBack(int pos_x, int pos_y) const;
+  void callStoneSetCallBack(int pos_x, int pos_y) const;
 
   virtual void draw() const override;
 
