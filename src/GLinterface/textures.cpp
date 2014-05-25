@@ -44,44 +44,42 @@ namespace Textures2DHolder {
   }
 }
 
-Texture2D::Texture2D(const string& filename, Tcontext* cxt): cxt(nullptr),
+Tcontext* Texture2D::context;
+
+Texture2D::Texture2D(const string& filename):
     crop{{0,1},{1,1},{1,0},{0,0}} {
-  load(filename, cxt);
+  load(filename);
 }
 
 Texture2D::~Texture2D() {
   release();
 }
 
-Texture2D::Texture2D(const Texture2D& right): cxt(nullptr),
+Texture2D::Texture2D(const Texture2D& right):
     crop{{0,1},{1,1},{1,0},{0,0}} {
-  load(right.filename,right.cxt);
+  load(right.filename);
 }
 
 Texture2D& Texture2D::operator=(const Texture2D& right) {
   release();
   filename = right.filename;
-  cxt = right.cxt;
-  info = Textures2DHolder::loadTexture(filename, cxt);
+  info = Textures2DHolder::loadTexture(filename,context);
   return *this;
 }
 
-bool Texture2D::load(const string& filename, Tcontext* cxt) {
-  info = Textures2DHolder::loadTexture(filename, cxt);
+bool Texture2D::load(const string& filename) {
+  info = Textures2DHolder::loadTexture(filename,context);
   if (info.texture != 0) {
     this->filename = filename;
-    this->cxt = cxt;
   } else {
-    this->cxt = nullptr;
     return false;
   }
   return true;
 }
 
 void Texture2D::release() {
-  if (cxt) {
-    Textures2DHolder::freeTexture(filename, cxt);
-    cxt = nullptr;
+  if (info.texture) {
+    Textures2DHolder::freeTexture(filename, context);
     filename.clear();
     info = Texture2DInfo();
   }

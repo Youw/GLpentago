@@ -4,6 +4,7 @@
 #include "renderobject.h"
 
 #include <memory>
+#include <functional>
 
 #ifndef HAVE_GLES
 #include <GL/gl.h>
@@ -11,6 +12,8 @@
 #include <GLES/gl.h>
 #endif
 
+using RotateCallBack = void(int quadrant_x, int quadrant_y, bool rotate_right);
+using StoneSetCallBack = void(int pos_x, int pos_y);
 class PentagoBoardImpl;
 
 class PentagoBoard: public RenderObject
@@ -22,6 +25,8 @@ public:
         GLint height = 0,
         int board_size = 2);
 
+  ~PentagoBoard();
+
   PentagoBoard(const PentagoBoard& rigth);
   PentagoBoard& operator=(const PentagoBoard& rigth);
 
@@ -31,6 +36,11 @@ public:
   PentagoBoard& unsetStone(int x_pos, int y_pos);
   PentagoBoard& rotate(int board_x, int board_y, bool  right_direction);
 
+  PentagoBoard& setRotateCallBack(std::function<RotateCallBack> rotate_call_back);
+  PentagoBoard& callRotateCallBack(int quadrant_x, int quadrant_y, bool rotate_right) const;
+
+  PentagoBoard& setStoneSetCallBack(std::function<StoneSetCallBack> stone_set_call_back);
+  PentagoBoard& callStoneSetCallBack(int pos_x, int pos_y) const;
 
   virtual void draw() const override;
 
@@ -53,10 +63,9 @@ public:
 
   virtual void keyPress(int key, bool repeat, KeyboardModifier mod) override;
   virtual void keyRelease(int key, KeyboardModifier mod) override;
-  virtual void charInput(int unicode_key) override;
 
 private:
-  std::unique_ptr<PentagoBoardImpl> impl;
+  PentagoBoardImpl* impl;
 };
 
 #endif // BOARD_H

@@ -43,11 +43,11 @@ GLview::~GLview() {
 }
 
 void GLview::buildMenus() {
-  Texture2D button_texture(":/graphics/button_menu.jpg",this->context());
+  Texture2D button_texture(":/graphics/button_menu.jpg");
   main_menu.setPos(200,150);
   main_menu.setSize(624,724);
   main_menu
-      .setTexture(Texture2D(":/graphics/dots.png",this->context()))
+      .setTexture(Texture2D(":/graphics/dots.png"))
       .addObject(Button(0,206,512,100,"New game",button_texture).setClickCallBack(
                    [&]() {
                        this->goToMenu(menu_new_game);
@@ -70,7 +70,7 @@ void GLview::buildMenus() {
   menu_new_game.setPos(200,260);
   menu_new_game.setSize(624,504);
   menu_new_game
-      .setTexture(Texture2D(":/graphics/dots.png",this->context()))
+      .setTexture(Texture2D(":/graphics/dots.png"))
       .addObject(Button(0,311,512,100,"One player",button_texture))
       .addObject(Button(0,421,512,100,"Two players",button_texture))
       .addObject(Button(0,631,512,100,"Back",button_texture).setClickCallBack(
@@ -82,7 +82,7 @@ void GLview::buildMenus() {
   menu_load_game.setPos(200,260);
   menu_load_game.setSize(624,504);
   menu_load_game
-      .setTexture(Texture2D(":/graphics/dots.png",this->context()))
+      .setTexture(Texture2D(":/graphics/dots.png"))
       .addObject(Button(0,311,512,100,"Autosave",button_texture))
       .addObject(Button(0,631,512,100,"Back",button_texture).setClickCallBack(
                    [&]() {
@@ -93,9 +93,9 @@ void GLview::buildMenus() {
   menu_join_game.setPos(200,260);
   menu_join_game.setSize(624,504);
   menu_join_game
-      .setTexture(Texture2D(":/graphics/dots.png",this->context()))
+      .setTexture(Texture2D(":/graphics/dots.png"))
       .addObject(Label("Enter Host IP:",0,280, QFont("Snap ITC", 32, 40, false))
-                .setBackground(Texture2D(":/graphics/screwed_background.jpg",this->context()))
+                .setBackground(Texture2D(":/graphics/screwed_background.jpg"))
                 )
       .addObject(TextEdit(0,360,512,80,button_texture).setMaxTextLength(-1))
       .addObject(Button(0,450,512,100,"Connect",button_texture))
@@ -122,6 +122,7 @@ void GLview::goToMenu(Menu& menu) {
 }
 
 void GLview::initializeGL() {
+  Texture2D::setContext(this->context());
   qDebug() << "GL version: " << (char*)glGetString(GL_VERSION) << endl;
 
   glEnable(GL_TEXTURE_2D);
@@ -131,15 +132,15 @@ void GLview::initializeGL() {
   glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 //  glEnable(GL_DEPTH_TEST);
 
-  Button::texture_blurr.load(":/graphics/glass_blurred.jpg",this->context());
-  menu_background_texture.load(":/graphics/background.jpg",this->context());
+  Button::texture_blurr.load(":/graphics/glass_blurred.jpg");
+  menu_background_texture.load(":/graphics/background.jpg");
 
   buildMenus();
 
-  stone = Stone(100,100,200,Texture2D(":/graphics/stone.png",this->context()));
+  board = PentagoBoard(12,12,1000,1000);
 
-  current_objects.push_back(&main_menu );
-  current_objects.push_back(&stone);
+//  current_objects.push_back(&main_menu );
+  current_objects.push_back(&board);
 
 //  glEnable(GL_LIGHTING);
 //  glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);

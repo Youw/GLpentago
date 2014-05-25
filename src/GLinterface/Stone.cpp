@@ -13,6 +13,11 @@ Stone::Stone(GLint x_left_top,
 
 }
 
+Stone& Stone::setSize(int width, int height) {
+  pos.setSize(width,height);
+  return *this;
+}
+
 Stone& Stone::setSetted(bool set) {
   if(setted!=set) {
       pos = decltype(pos) (pos.posX()+pos.width(),pos.posY()+pos.height(),-pos.width(),-pos.height());
@@ -42,7 +47,6 @@ void Stone::mouseDown(int x, int y) {
   (void)x;
   (void)y;
   pressed = true;
-  setSetted(!setted);
 }
 
 void Stone::mouseUp(int x, int y) {
@@ -64,7 +68,7 @@ void Stone::unHover() {
 #define SQR(x) (x)*(x)
 
 bool Stone::underMouse(int x, int y) const {
-  return std::sqrt(SQR(pos.posXcenter()-x)+SQR(pos.posYcenter()-y))<std::abs(pos.width())/2.0;
+  return std::sqrt(SQR(pos.posXcenter()-x)+SQR(pos.posYcenter()-y))<std::sqrt(pos.width()*pos.height())/2.0;
 }
 
 void Stone::setPos(int x, int y) {

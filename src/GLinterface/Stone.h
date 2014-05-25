@@ -19,6 +19,8 @@ public:
         GLint radius = 0,
         const Texture2D& texture = Texture2D());
 
+  Stone& setSize(int width, int height);
+
   bool isSetted() const { return setted; }
   Stone& setSetted(bool set);
 

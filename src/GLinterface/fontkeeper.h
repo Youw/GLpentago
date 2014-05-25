@@ -31,8 +31,8 @@ protected:
 
 
 template<typename Keeper>
-FontKeeper<Keeper>::FontKeeper(const QFont &font) {
-    text_font.reset(new glutils::GLfont(QFont(font)));
+FontKeeper<Keeper>::FontKeeper(const QFont &font):
+      text_font(new glutils::GLfont(QFont(font))) {
     font_color[0] = 0;
     font_color[1] = 0;
     font_color[2] = 0;

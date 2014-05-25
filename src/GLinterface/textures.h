@@ -33,22 +33,23 @@ class Texture2D
 {
   Texture2DInfo info;
   string filename;
-  Tcontext* cxt;
   GLdouble crop[4][2];
+  static Tcontext* context;
 public:
+  static void setContext(Tcontext* ctxt) {
+    context = ctxt;
+  }
 
   //construct and load texture from file
   // "" - means empty texture
-  Texture2D(const string& filename = "", Tcontext* cxt = nullptr);
+  Texture2D(const string& filename = "");
   ~Texture2D();
 
   Texture2D(const Texture2D& right);
   Texture2D& operator=(const Texture2D& right);
 
-  Tcontext* getCurContext() const { return cxt; }
-
   //release current and load new texture from filename
-  bool load(const string& filename, Tcontext* cxt);
+  bool load(const string& filename);
   //release this texture resources
   void release();
 

@@ -1,17 +1,200 @@
 #include "pentagoboard.h"
+#include "GLRectangleCoord.h"
+#include "stone.h"
+
+
+#define STONE_SIZE_TO_QUADRANT  0.2031
+#define STONE_SPASE_TO_QUADRANT 0.1415
+#define STONE_SPACE_BEGIN       0.537
+#define QUADRANTS_SPACE
+
+
+
+#include <array>
+
+using std::array;
+
+class BoardQuadrant: public RenderObject {
+  GLRectangleCoord<GLint> pos;
+  GLdouble angle;
+  GLint dx,dy;
+  PentagoBoard* parent;
+  int my_pos_x, my_pos_y;
+  int active_x, active_y;
+  array<array<Stone,3>,3> stones;
+public:
+
+  BoardQuadrant(GLint x_left_top = 0,
+                GLint y_left_top = 0,
+                GLint width = 0,
+                GLint height = 0,
+                int my_pos_x = 0,
+                int my_pos_y = 0,
+                const Texture2D& texture = Texture2D()):
+      pos(x_left_top, y_left_top, width, height),
+      angle(0), dx(0), dy(0),
+      my_pos_x(my_pos_x), my_pos_y(my_pos_y),
+      active_x(-1), active_y(-1) {
+    (void)texture;
+    reposStones();
+    for (auto& i: stones) {
+        for (auto& o: i) {
+            o.setTexture(Texture2D(":/graphics/stone.png"));
+          }
+      }
+  }
+
+  void setSize(int width, int height) {
+    pos.setSize(width, height);
+    reposStones();
+  }
+
+  void draw() const {
+    glColor4f(1,0,0,1);
+    glBindTexture(GL_TEXTURE_2D,0);
+    glVertexPointer(pos.dimension, GL_INT, 0, pos.glCoords());
+    glDrawArrays(GL_TRIANGLE_FAN,0,4);
+    for (auto& i: stones) {
+        for (auto& o: i) {
+            o.draw();
+          }
+      }
+  }
+
+  virtual void setActive(bool active) override {
+    if(!active) {
+        unHover();
+      }
+  }
+
+  void setActive(int stone_x, int stone_y) {
+    stones[stone_x][stone_y].setActive(true);
+    active_x = stone_x;
+    active_y = stone_y;
+  }
+
+  virtual bool isActive() const override {
+    return (active_x!=-1)&(active_y!=0);
+  }
+
+  virtual bool canBeActive() const override {
+    return true;
+  }
+
+  void mouseDown(int x, int y) override {
+    for (auto& i: stones) {
+        for (auto& o: i) {
+            if(o.underMouse(x,y)) {
+                o.mouseDown(x,y);
+              }
+          }
+      }
+  }
+
+  void mouseUp(int x, int y) override {
+    for (auto& i: stones) {
+        for (auto& o: i) {
+            o.mouseUp(x,y);
+          }
+      }
+  }
+
+  void hover(int x, int y) override {
+    for (unsigned i=0; i< stones.size(); i++) {
+        for(unsigned j=0; j< stones[i].size(); j++) {
+            if (stones[i][j].underMouse(x,y)) {
+                stones[i][j].hover(x,y);
+                if(isActive()) {
+                    stones[active_x][active_y].unHover();
+                  }
+                active_x = i;
+                active_y = j;
+                return;
+              }
+          }
+      }
+  }
+
+  void unHover() override {
+    stones[active_x][active_y].unHover();
+    active_x = -1;
+    active_y = -1;
+  }
+
+  bool underMouse(int x, int y) const override {
+    return pos.posInRect(x,y);
+  }
+
+  void setPos(int x, int y) override {
+    pos.setPos(x,y);
+    reposStones();
+  }
+
+  int posX() const override {
+    return pos.posX();
+  }
+
+  int posY() const override {
+    return pos.posY();
+  }
+
+  int height() const override {
+    return pos.height();
+  }
+
+  int width() const override {
+    return pos.width();
+  }
+
+  void keyPress(int key, bool repeat, KeyboardModifier mod) override {
+    (void)repeat;
+    if (mod == MD_NONE) {
+        (void)key;
+      }
+  }
+
+  void keyRelease(int key, KeyboardModifier mod) override {
+    if (mod == MD_NONE) {
+        (void)key;
+      }
+  }
+
+private:
+  void reposStones() {
+    static const float H = STONE_SIZE_TO_QUADRANT;
+    static const float h = STONE_SPASE_TO_QUADRANT;
+    static const float hh = STONE_SPACE_BEGIN;
+
+    for (unsigned i=0; i< stones.size(); i++) {
+        for(unsigned j=0; j< stones[i].size(); j++) {
+            stones[i][j].setPos(pos.posX()+pos.width()*(hh+i*(H+h)),pos.posY()+pos.height()*(hh+i*(H+h)));
+            stones[i][j].setSize(pos.width()*H,pos.height()*H);
+          }
+      }
+  }
+}; //board quadrant
 
 class PentagoBoardImpl: public RenderObject {
+  GLRectangleCoord<GLint> pos;
+  bool active;
+  std::function<StoneSetCallBack> set_call_back;
+  std::function<RotateCallBack> rotate_call_back;
+  BoardQuadrant k;
+
 public:
   PentagoBoardImpl(GLint x_left_top = 0,
         GLint y_left_top = 0,
         GLint width = 0,
         GLint height = 0,
-        int board_size = 2) {
-
+        int board_size = 2):
+      pos(x_left_top, y_left_top, width, height),
+      active(false) {
+    k.setPos(100,100);
+    k.setSize(512,512);
   }
 
   void setSize(int width, int height) {
-
+    pos.setSize(width,height);
   }
 
   void setStone(int x_pos, int y_pos) {
@@ -30,17 +213,39 @@ public:
 
   }
 
+  void setRotateCallBack(std::function<RotateCallBack> rotate_call_back) {
+    this->rotate_call_back = rotate_call_back;
+  }
+
+  void callRotateCallBack(int quadrant_x, int quadrant_y, bool rotate_right) const {
+    if(rotate_call_back)
+      rotate_call_back(quadrant_x,quadrant_y,rotate_right);
+  }
+
+  void setStoneSetCallBack(std::function<StoneSetCallBack> stone_set_call_back) {
+    this->set_call_back = stone_set_call_back;
+  }
+
+  void callStoneSetCallBack(int pos_x, int pos_y) const {
+    if(set_call_back) {
+        set_call_back(pos_y,pos_y);
+      }
+  }
 
   virtual void draw() const override {
-
+    glColor4f(0.7,0.7,0.7,1);
+    glBindTexture(GL_TEXTURE_2D,0);
+    glVertexPointer(pos.dimension, GL_INT, 0, pos.glCoords());
+    glDrawArrays(GL_TRIANGLE_FAN,0,4);
+    k.draw();
   }
 
   virtual void setActive(bool active) override {
-
+    this->active = active;
   }
 
   virtual bool isActive() const override {
-    return true;
+    return active;
   }
 
   virtual bool canBeActive() const override {
@@ -68,53 +273,58 @@ public:
   }
 
   virtual bool underMouse(int x, int y) const override {
-    return false;
+    return pos.posInRect(x,y);
   }
 
   virtual void setPos(int x, int y) override {
-
+    pos.setPos(x,y);
   }
 
   virtual int posX() const override {
-    return 0;
+    return pos.posY();
   }
 
   virtual int posY() const override {
-    return 0;
+    return pos.posY();
   }
 
   virtual int height() const override {
-    return 0;
+    return pos.height();
   }
 
   virtual int width() const override {
-    return 0;
+    return pos.width();
   }
 
   virtual void keyPress(int key, bool repeat, KeyboardModifier mod) override {
-
+    (void)repeat;
+    if(mod == MD_NONE) {
+        (void)key;
+      }
   }
 
   virtual void keyRelease(int key, KeyboardModifier mod) override {
-
+    (void)key;
+    (void)mod;
   }
 
-  virtual void charInput(int unicode_key) override {
-
-  }
-
-private:
-};
+};//class PentagoBoardImpl
 
 PentagoBoard::PentagoBoard(GLint x_left_top, GLint y_left_top, GLint width, GLint height, int board_size):
     impl(new PentagoBoardImpl(x_left_top,y_left_top,width, height,board_size)) { }
 
+PentagoBoard::~PentagoBoard() {
+  delete impl;
+}
+
 PentagoBoard::PentagoBoard(const PentagoBoard& rigth) {
-  this->impl.reset(new PentagoBoardImpl(*rigth.impl));
+  delete impl;
+  impl = new PentagoBoardImpl(*rigth.impl);
 }
 
 PentagoBoard& PentagoBoard::operator=(const PentagoBoard& rigth) {
-  this->impl.reset(new PentagoBoardImpl(*rigth.impl));
+  delete impl;
+  impl = new PentagoBoardImpl(*rigth.impl);
   return *this;
 }
 
@@ -144,6 +354,21 @@ PentagoBoard& PentagoBoard::rotate(int board_x, int board_y, bool  right_directi
   return *this;
 }
 
+PentagoBoard& PentagoBoard::setRotateCallBack(std::function<RotateCallBack> rotate_call_back) {
+
+}
+
+PentagoBoard& PentagoBoard::callRotateCallBack(int quadrant_x, int quadrant_y, bool rotate_right) const {
+
+}
+
+PentagoBoard& PentagoBoard::setStoneSetCallBack(std::function<StoneSetCallBack> stone_set_call_back) {
+
+}
+
+PentagoBoard& PentagoBoard::callStoneSetCallBack(int pos_x, int pos_y) const {
+
+}
 
 void PentagoBoard::draw() const {
   impl->draw();
@@ -211,8 +436,4 @@ void PentagoBoard::keyPress(int key, bool repeat, KeyboardModifier mod) {
 
 void PentagoBoard::keyRelease(int key, KeyboardModifier mod) {
   impl->keyRelease(key,mod);
-}
-
-void PentagoBoard::charInput(int unicode_key) {
-  impl->charInput(unicode_key);
 }
