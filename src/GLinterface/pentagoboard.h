@@ -14,6 +14,7 @@
 
 using RotateCallBack = void(int quadrant_x, int quadrant_y, bool rotate_right);
 using StoneSetCallBack = void(int pos_x, int pos_y);
+
 class PentagoBoardImpl;
 
 class PentagoBoard: public RenderObject
