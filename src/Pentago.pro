@@ -45,7 +45,7 @@ CONFIG += c++11
 
 RC_FILE = pentago.rc
 
-LIBS += -lGLU
+linux: LIBS += -lGLU
 
 OTHER_FILES += \
     android/AndroidManifest.xml
