@@ -143,8 +143,8 @@ void GLview::initializeGL() {
       qDebug() << "Stone clicked at: x =" <<x<<"; y ="<<y<<".";
     });
 
-//  current_objects.push_back(&main_menu );
-  //current_objects.push_back(&*board);
+ // current_objects.push_back(&main_menu );
+  current_objects.push_back(&*board);
 
 //  glEnable(GL_LIGHTING);
 //  glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
