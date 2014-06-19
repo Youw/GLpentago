@@ -17,7 +17,7 @@
 
 
 GLview::GLview(QWidget *parent)
-    : QGLWidget(parent)
+    : QGLWidget(parent), clicked_object(nullptr)
 {
 //  setWindowIcon(QIcon(":/window/pentago.ico"));
   setMouseTracking(true);
@@ -141,6 +141,12 @@ void GLview::initializeGL() {
 
   board->setStoneSetCallBack([&] (int x, int y) {
       qDebug() << "Stone clicked at: x =" <<x<<"; y ="<<y<<".";
+      board->setStone(x,y);
+      board->setStoneColor(x,y,0.8,0.2,0.4,0.9);
+    });
+  board->setRotateCallBack([&](int quadrant_x, int quadrant_y, bool rotate_right){
+      qDebug() << "Quadrant " << quadrant_x << ", " << quadrant_y << (rotate_right?"rotated to right":"rotated to left");
+      board->rotate(quadrant_x,quadrant_y,rotate_right);
     });
 
 //  current_objects.push_back(&main_menu );
@@ -270,6 +276,8 @@ void GLview::mousePressEvent ( QMouseEvent * event ) {
     for(auto o: current_objects) {
       if(o->underMouse(m_w.x,m_w.y)) {
         o->mouseDown(m_w.x,m_w.y);
+        clicked_object = o;
+        return;
       }
     }
     updateGL();
@@ -277,9 +285,14 @@ void GLview::mousePressEvent ( QMouseEvent * event ) {
 
 void GLview::mouseReleaseEvent ( QMouseEvent * event ) {
     mouseCoordTranslate(event->pos().x(),event->pos().y());
-    for(auto o: current_objects) {
-      o->mouseUp(m_w.x,m_w.y);
-    }
+    if(clicked_object) {
+        clicked_object->mouseUp(m_w.x,m_w.y);
+        clicked_object = nullptr;
+      } else {
+        for(auto o: current_objects) {
+            o->mouseUp(m_w.x,m_w.y);
+          }
+      }
     updateGL();
 }
 
@@ -289,13 +302,17 @@ void GLview::mouseDoubleClickEvent ( QMouseEvent * event ) {
 
 void GLview::mouseMoveEvent(QMouseEvent* event) {
   mouseCoordTranslate(event->pos().x(),event->pos().y());
-  for(auto o: current_objects) {
-    if(o->underMouse(m_w.x,m_w.y)) {
-      o->hover(m_w.x,m_w.y);
+  if(clicked_object) {
+      clicked_object->hover(m_w.x,m_w.y);
     } else {
-      o->unHover();
-    }
-  }
+        for(auto o: current_objects) {
+            if(o->underMouse(m_w.x,m_w.y)) {
+                o->hover(m_w.x,m_w.y);
+              } else {
+                o->unHover();
+              }
+          }
+      }
   updateGL();
 }
 

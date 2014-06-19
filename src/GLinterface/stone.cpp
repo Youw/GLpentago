@@ -59,6 +59,23 @@ void Stone::draw() const {
   texture.draw(pos.glCoords(),pos.dimension);
 }
 
+#ifndef M_PI
+#define M_PI           3.14159265358979323846  /* pi */
+#endif
+
+void Stone::draw(double angle) const {
+  if(angle) {
+      glPushMatrix();
+      glTranslated(pos.posXcenter(),pos.posYcenter(),0);
+      glRotated(angle/M_PI*180,0,0,-1);
+      glTranslated(-pos.posXcenter(),-pos.posYcenter(),0);
+    }
+  draw();
+  if(angle) {
+      glPopMatrix();
+    }
+}
+
 void Stone::click(int x, int y) {
   (void)x;
   (void)y;

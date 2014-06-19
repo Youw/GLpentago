@@ -66,8 +66,9 @@ private:
 #ifdef QT_DEBUG
     float angle;
     int count;
-
 #endif
+
+    RenderObject* clicked_object;
 };
 
 #endif // GLVIEW_H

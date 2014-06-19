@@ -2,14 +2,6 @@
 #include "GLRectangleCoord.h"
 #include "stone.h"
 
-
-#define STONE_SIZE_TO_QUADRANT  0.2031
-#define STONE_SPASE_TO_QUADRANT 0.1415
-#define STONE_SPACE_BEGIN       0.0537
-#define QUADRANTS_SPACE         0.0340
-#define BACKGROUND_SPACE        0.104
-
-
 #include <QDebug>
 
 #include <array>
@@ -18,7 +10,11 @@
 #include <cmath>
 
 #ifndef M_PI
-# define M_PI           3.14159265358979323846  /* pi */
+#define M_PI           3.14159265358979323846  /* pi */
+#endif
+
+#ifndef M_2PI
+#define M_2PI          6.28318530717958647692  /* 2*pi */
 #endif
 
 using std::array;
@@ -26,7 +22,13 @@ using std::vector;
 
 class BoardQuadrant: public RenderObject {
 public:
-  static const unsigned QUADRANT_SIZE = 3;//class is not designed for anything else
+  static constexpr unsigned QUADRANT_SIZE           = 3;
+  //magic constants...even don't ask
+  static constexpr double STONE_SIZE_TO_QUADRANT    = 0.2031*3/QUADRANT_SIZE;
+  static constexpr double STONE_SPASE_TO_QUADRANT   = 0.1415*3/QUADRANT_SIZE;
+  static constexpr double STONE_SPACE_BEGIN         = 0.0537*3/QUADRANT_SIZE;
+  static constexpr double QUADRANTS_SPACE           = 0.0340*3/QUADRANT_SIZE;
+  static constexpr double BACKGROUND_SPACE          = 0.1040*3/QUADRANT_SIZE;
 private:
   PentagoBoard* parent;
 
@@ -43,6 +45,8 @@ private:
 
   bool mouse_downed;
   double rotate_angle;
+
+  Stone* clicked_stone;
 public:
 
   BoardQuadrant(PentagoBoard* parent,
@@ -55,7 +59,8 @@ public:
       angle(0), dx(0), dy(0),
       my_pos_x(0), my_pos_y(0),
       active_x(-1), active_y(-1),
-      mouse_downed(false) {
+      mouse_downed(false),
+      clicked_stone(nullptr) {
 
     (void)texture;
     reposStones();
@@ -116,7 +121,9 @@ public:
   }
 
   void rotate(bool  right_direction) {
-    stones[active_x][active_y].setActive(false);
+//    if (isActive()) {
+//        stones[active_x][active_y].setActive(false);
+//      }
     Stone tmp = stones[0][0];
     if(right_direction) {
         stones[0][0] = stones[0][1];
@@ -137,7 +144,9 @@ public:
         stones[0][2] = stones[0][1];
         stones[0][1] = tmp;
       }
-    stones[active_x][active_y].setActive(true);
+//    if (isActive()) {
+//        stones[active_x][active_y].setActive(true);
+//      }
   }
 
   void unHoverStone() {
@@ -167,7 +176,7 @@ public:
     glDrawArrays(GL_TRIANGLE_FAN,0,4);
     for (auto& i: stones) {
         for (auto& o: i) {
-            o.draw();
+            o.draw(-rotate_angle);
           }
       }
     if(mouse_downed) {
@@ -195,34 +204,7 @@ public:
     return true;
   }
 
-  void mouseDown(int x, int y) override {
-    for (auto& i: stones) {
-        for (auto& o: i) {
-            if(o.underMouse(x,y)) {
-                o.mouseDown(x,y);
-                return;
-              }
-          }
-      }
-    click_pos.x = x;
-    click_pos.y = y;
-    rotate_angle = 0;
-    mouse_downed = true;
-   qDebug() << "mouse_downed = " << mouse_downed;
-  }
-
-  void mouseUp(int x, int y) override {
-    for (auto& i: stones) {
-        for (auto& o: i) {
-            o.mouseUp(x,y);
-          }
-      }
-    mouse_downed = false;
-   qDebug() << "mouse_downed = " << mouse_downed;
-  }
-
-
-  double hypot3(double x, double y, double z) {
+  inline double hypot3(double x, double y, double z) {
     return sqrt(x*x+y*y+z*z);
   }
 
@@ -235,18 +217,73 @@ public:
     double x2 = B.x;
     double y2 = B.y;
 
-    double res = (1-2*(x1*y2-x2*y1>0))*acos((x1*x2+y1*y2)/(hypot(x1,y1)*hypot(x2,y2)));
-    qDebug() << "A = (" << A.x << "," << A.y << ");";
-    qDebug() << "B = (" << B.x << "," << B.y << ");";
-    qDebug() << "angle = " << res;
-    qDebug() << "cos(2*angle) = " << cos(2*res);
-    qDebug() << "sin(2*angle) = " << sin(2*res);
+    double z1 = 0;
+    double z2 = 0;
+
+    double angle_cos = ((x1*x2+y1*y2)/(hypot(x1,y1)*hypot(x2,y2)));
+    double angle_sin = (1-2*(x1*y2-x2*y1>0))*(hypot3(x1*y2-x2*y1,x2*z1-z2*x1,y1*z2-y2*z1)/(hypot3(x1,y1,z1)*hypot3(x2,y2,z2)));
+
+//    qDebug() << "\n";
+//    qDebug() << " acos(cos(angle)) = " << acos(angle_cos);
+//    qDebug() << " asin(sin(angle)) = " << asin(angle_sin);
+
+    double res = angle_cos>0?asin(angle_sin):angle_sin>0?M_PI-asin(angle_sin):-M_PI-asin(angle_sin);
+//    qDebug() << " angle = " << res;
+
+//    qDebug() << "A = (" << A.x << "," << A.y << ");";
+//    qDebug() << "B = (" << B.x << "," << B.y << ");";
     return (res==NAN||res==INFINITY)?0:res;
+  }
+
+  void mouseDown(int x, int y) override {
+    for (auto& i: stones) {
+        for (auto& o: i) {
+            if(o.underMouse(x,y)) {
+                o.mouseDown(x,y);
+                clicked_stone = &o;
+                return;
+              }
+          }
+      }
+    click_pos.x = x;
+    click_pos.y = y;
+    rotate_angle = 0;
+    mouse_downed = true;
+//    qDebug() << "mouse_downed = " << mouse_downed;
+  }
+
+  void mouseUp(int x, int y) override {
+    if (clicked_stone) {
+        clicked_stone->mouseUp(x,y);
+        clicked_stone = nullptr;
+      } else if (mouse_downed) {
+        if (std::abs(rotate_angle)>M_PI/4) {
+            parent->callRotateCallBack(my_pos_x,my_pos_y,rotate_angle<0);
+          }
+        mouse_downed = false;
+        rotate_angle = 0;
+        clicked_stone = 0;
+      } else {
+        for (auto& i: stones) {
+            for (auto& o: i) {
+                o.mouseUp(x,y);
+              }
+          }
+      }
+
+//   qDebug() << "mouse_downed = " << mouse_downed;
   }
 
   void hover(int x, int y) override {
     if(mouse_downed) {
-        rotate_angle = pointsAngle(click_pos.x,click_pos.y,pos.posXcenter(),pos.posYcenter(),x,y)/2;
+        rotate_angle = pointsAngle(click_pos.x,click_pos.y,pos.posXcenter(),pos.posYcenter(),x,y);
+        if(rotate_angle>0) {
+            rotate_angle = rotate_angle/M_PI*180>88?88.0/180*M_PI:rotate_angle;
+          } else {
+            rotate_angle = rotate_angle/M_PI*180<-88?-88.0/180*M_PI:rotate_angle;
+          }
+      } else if (clicked_stone) {
+        clicked_stone->hover(x,y);
       } else {
         for (unsigned i=0; i< stones.size(); i++) {
           for(unsigned j=0; j< stones[i].size(); j++) {
@@ -333,6 +370,8 @@ class PentagoBoardImpl: public RenderObject {
   vector<vector<BoardQuadrant>> quadrants;
 
   int active_x, active_y;
+
+  BoardQuadrant* clicked_quadrant;
 public:
   PentagoBoardImpl(PentagoBoard *parent,
                    GLint x_left_top = 0,
@@ -344,7 +383,8 @@ public:
       pos(x_left_top, y_left_top, width, height),
       active(false),
       quadrants(board_size,vector<BoardQuadrant>(board_size,BoardQuadrant(parent))),
-      active_x(0), active_y(0) {
+      active_x(0), active_y(0),
+      clicked_quadrant(nullptr) {
         for (int i=0; i<board_size; i++) {
             for (int j=0; j<board_size; j++) {
                 quadrants[i][j].setPosOnBoard(i,j);
@@ -445,45 +485,60 @@ public:
         for(auto& o: i) {
             if(o.underMouse(x,y)) {
                 o.mouseDown(x,y);
+                clicked_quadrant = &o;
+                return;
               }
           }
       }
   }
 
   virtual void mouseUp(int x, int y) override {
-    for(auto& i: quadrants) {
-        for(auto& o: i) {
-            o.mouseUp(x,y);
+    if (clicked_quadrant) {
+        clicked_quadrant->mouseUp(x,y);
+        clicked_quadrant = nullptr;
+      } else {
+        for(auto& i: quadrants) {
+          for(auto& o: i) {
+              o.mouseUp(x,y);
+            }
           }
       }
   }
 
   virtual void hover(int x, int y) override {
-    for(unsigned i = 0; i<quadrants.size(); i++) {
-        for(unsigned j = 0; j<quadrants[i].size(); j++) {
-            if(quadrants[i][j].underMouse(x,y)) {
-                quadrants[i][j].hover(x,y);
-                if(quadrants[i][j].isActive()) {
-                    if((active_x!=(int)i)|(active_y!=(int)j)) {
-                        quadrants[active_x][active_y].unHoverStone();
-                        quadrants[active_x][active_y].unHover();
-                        active_x = i;
-                        active_y = j;
-                        return;
+    if (clicked_quadrant) {
+        clicked_quadrant->hover(x,y);
+      } else {
+        for(unsigned i = 0; i<quadrants.size(); i++) {
+            for(unsigned j = 0; j<quadrants[i].size(); j++) {
+                if(quadrants[i][j].underMouse(x,y)) {
+                    quadrants[i][j].hover(x,y);
+                    if(quadrants[i][j].isActive()) {
+                        if((active_x!=(int)i)|(active_y!=(int)j)) {
+                            quadrants[active_x][active_y].unHoverStone();
+                            quadrants[active_x][active_y].unHover();
+                            active_x = i;
+                            active_y = j;
+                            return;
+                          }
                       }
                   }
               }
-          }
+        }
       }
   }
 
   virtual void unHover() override {
-    for(auto& i: quadrants) {
-        for(auto& o: i) {
-              o.unHover();
-          }
-      }
-
+    if (clicked_quadrant) {
+        clicked_quadrant->unHover();
+        clicked_quadrant = nullptr;
+      } else {
+          for(auto& i: quadrants) {
+              for(auto& o: i) {
+                  o.unHover();
+                }
+            }
+        }
   }
 
   virtual bool underMouse(int x, int y) const override {
@@ -582,20 +637,20 @@ public:
   }
 private:
   void reposQuadrants() {
-    double dx = pos.width()/(1/QUADRANTS_SPACE+(quadrants.size()-1)*(1+1/QUADRANTS_SPACE));
+    double dx = pos.width()/(1/BoardQuadrant::QUADRANTS_SPACE+(quadrants.size()-1)*(1+1/BoardQuadrant::QUADRANTS_SPACE));
     double w = (pos.width()-dx*(quadrants.size()-1))/quadrants.size();
     double x = pos.posX();
 
-    double dy = pos.height()/(1/QUADRANTS_SPACE+(quadrants[0].size()-1)*(1+1/QUADRANTS_SPACE));
+    double dy = pos.height()/(1/BoardQuadrant::QUADRANTS_SPACE+(quadrants[0].size()-1)*(1+1/BoardQuadrant::QUADRANTS_SPACE));
     double h = (pos.height()-dy*(quadrants[0].size()-1))/quadrants[0].size();
 
-    double dw = w*BACKGROUND_SPACE;
-    double dh = h*BACKGROUND_SPACE;
+    double dw = w*BoardQuadrant::BACKGROUND_SPACE;
+    double dh = h*BoardQuadrant::BACKGROUND_SPACE;
     background_pos = decltype(background_pos)
         (pos.posX()+dw,pos.posY()+dh,pos.width()-2*dw,pos.height()-2*dh);
 
     for(unsigned int i = 0; i<quadrants.size(); i++) {
-        double dy = pos.height()/(1/QUADRANTS_SPACE+(quadrants[i].size()-1)*(1+1/QUADRANTS_SPACE));
+        double dy = pos.height()/(1/BoardQuadrant::QUADRANTS_SPACE+(quadrants[i].size()-1)*(1+1/BoardQuadrant::QUADRANTS_SPACE));
         double h = (pos.height()-dy*(quadrants[i].size()-1))/quadrants[i].size();
         double y = pos.posY();
         for(unsigned int j = 0; j<quadrants[i].size(); j++) {

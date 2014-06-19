@@ -33,6 +33,7 @@ public:
   Stone& setClickCallBack(const std::function<void()>& call_back);
 
   virtual void draw() const override;
+  void draw(double angle) const;
 
   virtual void setActive(bool active) { this->active = active; }
   virtual bool isActive() const { return active; }
