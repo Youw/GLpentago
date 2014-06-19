@@ -76,7 +76,7 @@ void Stone::mouseDown(int x, int y) {
 void Stone::mouseUp(int x, int y) {
   (void)x;
   (void)y;
-  if(underMouse(x,y)) {
+  if(underMouse(x,y)&&pressed) {
       click(x,y);
     }
   pressed = false;

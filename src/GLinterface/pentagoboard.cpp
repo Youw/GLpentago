@@ -10,15 +10,23 @@
 #define BACKGROUND_SPACE        0.104
 
 
+#include <QDebug>
+
 #include <array>
 #include <vector>
+
+#include <cmath>
+
+#ifndef M_PI
+# define M_PI           3.14159265358979323846  /* pi */
+#endif
 
 using std::array;
 using std::vector;
 
 class BoardQuadrant: public RenderObject {
 public:
-  static const unsigned QUADRANT_SIZE = 3;
+  static const unsigned QUADRANT_SIZE = 3;//class is not designed for anything else
 private:
   PentagoBoard* parent;
 
@@ -28,6 +36,13 @@ private:
   int my_pos_x, my_pos_y;
   int active_x, active_y;
   array<array<Stone,QUADRANT_SIZE>,QUADRANT_SIZE> stones;
+
+  struct {
+    int x,y;
+  } click_pos;
+
+  bool mouse_downed;
+  double rotate_angle;
 public:
 
   BoardQuadrant(PentagoBoard* parent,
@@ -39,7 +54,9 @@ public:
       pos(x_left_top, y_left_top, width, height),
       angle(0), dx(0), dy(0),
       my_pos_x(0), my_pos_y(0),
-      active_x(-1), active_y(-1) {
+      active_x(-1), active_y(-1),
+      mouse_downed(false) {
+
     (void)texture;
     reposStones();
     setParent(parent);
@@ -136,6 +153,14 @@ public:
   }
 
   void draw() const {
+    if(mouse_downed) {
+        glPushMatrix();
+        glTranslated(pos.posXcenter(),pos.posYcenter(),0);
+        glRotated(rotate_angle/M_PI*180,0,0,-1);
+        double scale=1-std::abs(sin(2*rotate_angle))*(1-1/sqrt(2));
+        glScaled(scale,scale,1);
+        glTranslated(-pos.posXcenter(),-pos.posYcenter(),0);
+      }
     glColor4f(0.5,0,0,1);
     glBindTexture(GL_TEXTURE_2D,0);
     glVertexPointer(pos.dimension, GL_INT, 0, pos.glCoords());
@@ -144,6 +169,9 @@ public:
         for (auto& o: i) {
             o.draw();
           }
+      }
+    if(mouse_downed) {
+        glPopMatrix();
       }
   }
 
@@ -160,7 +188,7 @@ public:
   }
 
   virtual bool isActive() const override {
-    return (active_x>=0)&(active_y>=0);
+    return (active_x>=0)&(active_y>=0)&((unsigned)active_x<QUADRANT_SIZE)&((unsigned)active_y<QUADRANT_SIZE);
   }
 
   virtual bool canBeActive() const override {
@@ -172,9 +200,15 @@ public:
         for (auto& o: i) {
             if(o.underMouse(x,y)) {
                 o.mouseDown(x,y);
+                return;
               }
           }
       }
+    click_pos.x = x;
+    click_pos.y = y;
+    rotate_angle = 0;
+    mouse_downed = true;
+   qDebug() << "mouse_downed = " << mouse_downed;
   }
 
   void mouseUp(int x, int y) override {
@@ -183,11 +217,39 @@ public:
             o.mouseUp(x,y);
           }
       }
+    mouse_downed = false;
+   qDebug() << "mouse_downed = " << mouse_downed;
+  }
+
+
+  double hypot3(double x, double y, double z) {
+    return sqrt(x*x+y*y+z*z);
+  }
+
+  inline double pointsAngle(int px1,int py1, int px2, int py2, int px3, int py3) {
+    struct pt { int x, y; };
+    pt A {px1-px2,py1-py2};
+    pt B {px3-px2,py3-py2};
+    double x1 = A.x;
+    double y1 = A.y;
+    double x2 = B.x;
+    double y2 = B.y;
+
+    double res = (1-2*(x1*y2-x2*y1>0))*acos((x1*x2+y1*y2)/(hypot(x1,y1)*hypot(x2,y2)));
+    qDebug() << "A = (" << A.x << "," << A.y << ");";
+    qDebug() << "B = (" << B.x << "," << B.y << ");";
+    qDebug() << "angle = " << res;
+    qDebug() << "cos(2*angle) = " << cos(2*res);
+    qDebug() << "sin(2*angle) = " << sin(2*res);
+    return (res==NAN||res==INFINITY)?0:res;
   }
 
   void hover(int x, int y) override {
-    for (unsigned i=0; i< stones.size(); i++) {
-        for(unsigned j=0; j< stones[i].size(); j++) {
+    if(mouse_downed) {
+        rotate_angle = pointsAngle(click_pos.x,click_pos.y,pos.posXcenter(),pos.posYcenter(),x,y)/2;
+      } else {
+        for (unsigned i=0; i< stones.size(); i++) {
+          for(unsigned j=0; j< stones[i].size(); j++) {
             if(active_x!=(int)i || active_y!=(int)j) {
               if (stones[i][j].underMouse(x,y)) {
                   stones[i][j].hover(x,y);
@@ -199,6 +261,7 @@ public:
                   return;
                 }
               }
+            }
           }
       }
   }

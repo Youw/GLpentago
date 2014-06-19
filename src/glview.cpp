@@ -143,7 +143,7 @@ void GLview::initializeGL() {
       qDebug() << "Stone clicked at: x =" <<x<<"; y ="<<y<<".";
     });
 
- // current_objects.push_back(&main_menu );
+//  current_objects.push_back(&main_menu );
   current_objects.push_back(&*board);
 
 //  glEnable(GL_LIGHTING);
