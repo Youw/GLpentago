@@ -27,6 +27,7 @@ public:
   Stone& setSetted(bool set);
 
   Stone& setColor(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
+  const GLfloat* getColor() const;
 
   Stone& setTexture(const Texture2D& texture = Texture2D());
 

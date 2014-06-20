@@ -121,32 +121,37 @@ public:
   }
 
   void rotate(bool  right_direction) {
-//    if (isActive()) {
-//        stones[active_x][active_y].setActive(false);
-//      }
-    Stone tmp = stones[0][0];
-    if(right_direction) {
-        stones[0][0] = stones[0][1];
-        stones[0][1] = stones[0][2];
-        stones[0][2] = stones[1][2];
-        stones[1][2] = stones[2][2];
-        stones[2][2] = stones[2][1];
-        stones[2][1] = stones[2][0];
-        stones[2][0] = stones[1][0];
-        stones[1][0] = tmp;
-      } else {
-        stones[0][0] = stones[1][0];
-        stones[1][0] = stones[2][0];
-        stones[2][0] = stones[2][1];
-        stones[2][1] = stones[2][2];
-        stones[2][2] = stones[1][2];
-        stones[1][2] = stones[0][2];
-        stones[0][2] = stones[0][1];
-        stones[0][1] = tmp;
+    if (isActive()) {
+        stones[active_x][active_y].setActive(false);
       }
-//    if (isActive()) {
-//        stones[active_x][active_y].setActive(true);
-//      }
+    Stone tmp1 = stones[0][0];
+    Stone tmp2 = stones[0][1];
+
+    if(right_direction) {
+        stones[0][0] = stones[0][2];
+        stones[0][1] = stones[1][2];
+        stones[0][2] = stones[2][2];
+        stones[1][2] = stones[2][1];
+        stones[2][2] = stones[2][0];
+        stones[2][1] = stones[1][0];
+        stones[2][0] = tmp1;
+        stones[1][0] = tmp2;
+
+      } else {
+        stones[0][0] = stones[2][0];
+        stones[1][0] = stones[2][1];
+        stones[2][0] = stones[2][2];
+        stones[2][1] = stones[1][2];
+        stones[2][2] = stones[0][2];
+        stones[1][2] = stones[0][1];
+        stones[0][2] = tmp1;
+        stones[0][1] = tmp2;
+      }
+    reposStones();
+    setParent(parent);
+    if (isActive()) {
+        stones[active_x][active_y].setActive(true);
+      }
   }
 
   void unHoverStone() {
@@ -421,7 +426,7 @@ public:
   }
 
   void rotate(int board_x, int board_y, bool  right_direction) {
-    quadrants[board_x/3][board_y/3].rotate(right_direction);
+    quadrants[board_x][board_y].rotate(right_direction);
   }
 
   void setRotateCallBack(std::function<RotateCallBack> rotate_call_back) {

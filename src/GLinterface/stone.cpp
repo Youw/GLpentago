@@ -34,6 +34,10 @@ Stone& Stone::setColor(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha) 
   return *this;
 }
 
+const GLfloat* Stone::getColor() const {
+  return color;
+}
+
 Stone& Stone::setTexture(const Texture2D& txtr) {
   texture = txtr;
   return *this;
