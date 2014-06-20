@@ -14,7 +14,11 @@ Stone::Stone(GLint x_left_top,
 }
 
 Stone& Stone::setSize(int width, int height) {
+  if (setted)
+    pos = decltype(pos) (pos.posX()+pos.width(),pos.posY()+pos.height(),-pos.width(),-pos.height());
   pos.setSize(width,height);
+  if (setted)
+    pos = decltype(pos) (pos.posX()+pos.width(),pos.posY()+pos.height(),-pos.width(),-pos.height());
   return *this;
 }
 
@@ -120,7 +124,12 @@ bool Stone::underMouse(int x, int y) const {
 }
 
 void Stone::setPos(int x, int y) {
+  if (setted)
+    pos = decltype(pos) (pos.posX()+pos.width(),pos.posY()+pos.height(),-pos.width(),-pos.height());
   pos.setPos(x,y);
+  if (setted)
+    pos = decltype(pos) (pos.posX()+pos.width(),pos.posY()+pos.height(),-pos.width(),-pos.height());
+
 }
 
 int Stone::posX() const {
