@@ -121,9 +121,6 @@ public:
   }
 
   void rotate(bool  right_direction) {
-    if (isActive()) {
-        stones[active_x][active_y].setActive(false);
-      }
     Stone tmp1 = stones[0][0];
     Stone tmp2 = stones[0][1];
 
@@ -149,8 +146,13 @@ public:
       }
     reposStones();
     setParent(parent);
-    if (isActive()) {
-        stones[active_x][active_y].setActive(true);
+    for (unsigned i=0; i< stones.size(); i++) {
+        for(unsigned j=0; j< stones[i].size(); j++) {
+            if (stones[i][j].isActive()) {
+                active_x = i;
+                active_y = j;
+              }
+          }
       }
   }
 
