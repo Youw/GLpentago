@@ -12,7 +12,7 @@ class Label: public RenderObject, public FontKeeper<Label>
 {
 public:
 
-  Label(const string& text = "label",
+  Label(const string& text = L"label",
         int x_left_top = 0,
         int y_left_top = 0,
         const QFont& font = QFont());

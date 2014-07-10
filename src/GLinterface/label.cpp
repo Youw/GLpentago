@@ -2,7 +2,7 @@
 #include <limits>
 #include <cstdint>
 
-Label::Label(const string& m_text,int x,int y,const QFont& font):
+Label::Label(const string &m_text, int x, int y, const QFont& font):
     FontKeeper(font), text(m_text), x_pos(x), y_pos(y) {
     fontChanged();
 }
@@ -61,6 +61,6 @@ void Label::drawCroped(int x_left, int x_right) const {
 }
 
 void Label::fontChanged() {
-  this->text_width = text_font->fontMetrics().width(text);
+  this->text_width = text_font->fontMetrics().width(QString::fromStdWString(text));
 //  this->strike_out_pos = text_font->fontMetrics().strikeOutPos();
 }

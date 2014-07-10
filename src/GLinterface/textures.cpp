@@ -13,7 +13,7 @@ namespace Textures2DHolder {
   static std::mutex m;
   static std::map<QString,AllInfo> textures_list;
 
-  static Texture2DInfo loadTexture(const string& filename, QGLContext* context) {
+  static Texture2DInfo loadTexture(const QString& filename, QGLContext* context) {
     AllInfo texture;
     if (filename!="") {
       std::lock_guard<std::mutex> lg(m);
@@ -30,7 +30,7 @@ namespace Textures2DHolder {
     return texture.info;
   }
 
-  static void freeTexture(const string& filename, QGLContext* context) {
+  static void freeTexture(const QString& filename, QGLContext* context) {
     std::lock_guard<std::mutex> lg(m);
     try {
       textures_list.at(filename).count--;
@@ -46,7 +46,7 @@ namespace Textures2DHolder {
 
 Tcontext* Texture2D::context;
 
-Texture2D::Texture2D(const string& filename):
+Texture2D::Texture2D(const QString &filename):
     crop{{0,1},{1,1},{1,0},{0,0}} {
   load(filename);
 }
@@ -67,7 +67,7 @@ Texture2D& Texture2D::operator=(const Texture2D& right) {
   return *this;
 }
 
-bool Texture2D::load(const string& filename) {
+bool Texture2D::load(const QString& filename) {
   info = Textures2DHolder::loadTexture(filename,context);
   if (info.texture != 0) {
     this->filename = filename;

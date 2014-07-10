@@ -9,7 +9,7 @@
 TextEdit::TextEdit(
     GLint x_left_top, GLint y_left_top, GLint width, GLint height, const Texture2D &background):
     background(background),
-    text("localhost"),
+    text(L"localhost"),
     active(false),
     hovered(false),
     pos(x_left_top,y_left_top),
@@ -136,7 +136,7 @@ void TextEdit::mouseDown(int x, int y) {
     } else {
       if(text_crop.posInRect(x,y)) {
           int tmp_pos = text.posX();
-          for(int i = 0; i<text.getText().length(); i++) {
+          for(unsigned i = 0; i<text.getText().length(); i++) {
               int w = text.getFontMetrics().width(text.getText()[i]);
               if(tmp_pos+w/2>x) {
                   setCurPos(i);
@@ -201,7 +201,7 @@ void TextEdit::keyPress(int key, bool repeat, KeyboardModifier mod) {
         case Qt::Key_Backspace: {
             if(cur_pos>0) {
                 string temp_text = text.getText();
-                temp_text.remove(--cur_pos,1);
+                temp_text.erase(--cur_pos,1);
                 text.setText(temp_text);
                 setCurPos(cur_pos);
               } else {
@@ -210,9 +210,9 @@ void TextEdit::keyPress(int key, bool repeat, KeyboardModifier mod) {
             break;
           }
         case Qt::Key_Delete: {
-            if(cur_pos<text.getText().length()) {
+            if(cur_pos<int(text.getText().length())) {
                 string temp_text = text.getText();
-                temp_text.remove(cur_pos,1);
+                temp_text.erase(cur_pos,1);
                 text.setText(temp_text);
               } else {
                 //Beep?
@@ -239,12 +239,12 @@ void TextEdit::keyRelease(int key, KeyboardModifier mod) {
 
 void TextEdit::charInput(int unicode_key) {
   if (iswprint(unicode_key)) {
-    if (max_width>0 && text.getText().size()>=max_width) {
+    if (max_width>0 && int(text.getText().size())>=max_width) {
         // TODO: Beep here
         return;
       }
     string temp_text = text.getText();
-    temp_text.insert(cur_pos++,unicode_key);
+    temp_text.insert(temp_text.begin()+cur_pos++,wchar_t(unicode_key));
     text.setText(temp_text);
     setCurPos(cur_pos);
   }

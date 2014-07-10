@@ -2,11 +2,8 @@
 
 #include <QtOpenGL>
 #include <QDebug>
-#include <climits>
+#include <QGLWidget>
 
-#include "GLinterface/button.h"
-#include "GLinterface/label.h"
-#include "GLinterface/textedit.h"
 
 #if !defined(HAVE_GLES)
 #include <GL/gl.h>
@@ -16,375 +13,783 @@
 #endif
 
 
-GLview::GLview(QWidget *parent)
-    : QGLWidget(parent), clicked_object(nullptr)
-{
-//  setWindowIcon(QIcon(":/window/pentago.ico"));
-  setMouseTracking(true);
-  QDesktopWidget desktop;
-  setGeometry(
-    desktop.screenGeometry().right()/2-320,
-    desktop.screenGeometry().bottom()/2-240,
-    640,480);
+#include "GLinterface/button.h"
+#include "GLinterface/label.h"
+#include "GLinterface/textedit.h"
+#include "GLinterface/textures.h"
+#include "GLinterface/renderobject.h"
+#include "GLinterface/menu.h"
+#include "GLinterface/pentagoboard.h"
+
+#include <vector>
+#include <stack>
+
+class GLview::GLviewImpl: public QGLWidget, public IView {
+
+private:
+    GLview * parent;
+public:
+    GLviewImpl(GLview * gl_parent=0, QWidget *qt_parent=0): QGLWidget(qt_parent), parent(gl_parent) {
+      clicked_object = nullptr;
+      setWindowIcon(QIcon(":/window/pentago.ico"));
+      setMouseTracking(true);
+      QDesktopWidget desktop;
+      setGeometry(
+        desktop.screenGeometry().right()/2-320,
+        desktop.screenGeometry().bottom()/2-240,
+        640,480);
 
 #ifndef QT_DEBUG
-  setMinimumSize(640,480);
+      setMinimumSize(640,480);
 #else //QT_DEBUG
-  count = 0;
-  angle = 0.2;
+      count = 0;
+      angle = 0.2;
+#endif //QT_DEBUG
+
+      setFormat(QGLFormat(QGL::DoubleBuffer));
+      setAutoBufferSwap(true);
+    }
+
+    virtual ~GLviewImpl() {
+      Button::texture_blurr.release();//kind of bugfix
+    }
+
+    void setParent(GLview * gl_parent) {
+      parent = gl_parent;
+    }
+
+
+protected:
+
+
+//QGLWidget:
+    virtual void initializeGL() override {
+      Texture2D::setContext(this->context());
+      qDebug() << "GL version: " << (char*)glGetString(GL_VERSION) << endl;
+
+      glEnable(GL_TEXTURE_2D);
+      glEnable(GL_BLEND);
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      glEnableClientState(GL_VERTEX_ARRAY);
+      glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+      Button::texture_blurr.load(":/graphics/glass_blurred.jpg");
+      menu_background_texture.load(":/graphics/background.jpg");
+
+      buildMenus();
+
+      board.reset(new PentagoBoard(12,12,1000,1000,2));
+
+      board->setStoneSetCallBack([&] (int x, int y) {
+          qDebug() << "Stone clicked at: x =" <<x<<"; y ="<<y<<".";
+          board->setStone(x,y);
+          board->setStoneColor(x,y,0.8,0.2,0.4,0.9);
+        });
+      board->setRotateCallBack([&](int quadrant_x, int quadrant_y, bool rotate_right){
+          qDebug() << "Quadrant " << quadrant_x << ", " << quadrant_y << (rotate_right?"rotated to right":"rotated to left");
+          board->rotate(quadrant_x,quadrant_y,rotate_right);
+        });
+
+      current_objects.push_back(&main_menu );
+    //  current_objects.push_back(&*board);
+
+    }
+
+    virtual void resizeGL(int w, int h) override {
+      width = w;
+      height = h;
+      glViewport(0,0,w,h);
+#if !defined(HAVE_GLES)
+      int wh = std::min(w,h);
+      int dx = w-wh;
+      int dy = h-wh;
+      glMatrixMode( GL_PROJECTION );
+        glLoadIdentity();
+    //    gluPerspective(45.0f, float(w)/h, -1024.f, 2048.0f);
+        glOrtho(0, w, h, 0, -1024, 1024 );
+        glTranslatef(dx/2.0,dy/2.0,0);
+        glScalef(wh/1024.0,wh/1024.0,1);
+      glMatrixMode( GL_MODELVIEW );
+    //  glTranslatef(dx/2.0,dy/2.0,0);
+    //  glScalef(wh/1024.0,wh/1024.0,1);
+    //  glTranslatef(-1100.0,dy/2.0,0);
+#else // !defined(HAVE_GLES)
+        glOrthof(0, w, h, 0, -1024, 1024 );
+#endif // !defined(HAVE_GLES)
+    }
+
+    virtual void paintGL() override {
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      glColor4f(1,1,1,1);
+      drawBackground(menu_background_texture);
+
+      for(auto o: current_objects) {
+        o->draw();
+      }
+
+#ifdef QT_DEBUG
+#ifndef HAVE_GLES
+      glColor4f(0.15,0.63,0.02,1);
+      renderText(20,20,QString("Mouse pos: X:%1 Y:%2").arg(m_x).arg(m_y));
+      renderText(20,40,QString("Mouse world pos:"));
+      renderText(20,50,QString("X:%1").arg(m_w.x));
+      renderText(20,60,QString("Y:%1").arg(m_w.y));
+      renderText(20,70,QString("Z:%1").arg(m_w.z));
+      renderText(20,80,QString("Press and hold T or press Y %1").arg(count));
+#else
+      qDebug() << QString("\nMouse pos: X:%1 Y:%2").arg(m_x).arg(m_y);
+#endif //HAVE_GLES
+
+#endif //QT_DEBUG
+    }
+// // QGLWidget
+
+    void drawBackground(Texture2D& texture) {
+      glMatrixMode( GL_PROJECTION );
+      glPushMatrix();
+      glLoadIdentity();
+    #if !defined(HAVE_GLES)
+      glOrtho(0, width, height, 0, -1, 1 );
+    #else
+      glOrthof(0, width, height, 0, -1, 1 );
+    #endif
+
+      float back_ratio = texture.width()/float(texture.height());
+      float window_ratio = width/float(height);
+      if(window_ratio>back_ratio) {
+        float tmp = (window_ratio/back_ratio*height-height)/2;
+        texture.draw({GLint(0)    ,GLint(-tmp)},
+                     {GLint(width),GLint(height+tmp)});
+      } else {
+        float tmp = (back_ratio/window_ratio*width-width)/2;
+        texture.draw({GLint(-tmp)     ,GLint(0)},
+                     {GLint(width+tmp),GLint(height)});
+      }
+      glPopMatrix();
+      glMatrixMode(GL_MODELVIEW);
+    }
+
+    struct Point3D {
+      GLdouble x,y,z;
+    };
+
+    Point3D unProject(int x, int y) {
+#ifndef HAVE_GLES
+        GLint viewport[4];
+        GLdouble modelview[16];
+        GLdouble projection[16];
+        GLfloat winX, winY, winZ;
+        GLdouble posX, posY, posZ;
+
+        glGetDoublev(GL_MODELVIEW_MATRIX, modelview);
+        glGetDoublev(GL_PROJECTION_MATRIX, projection);
+        glGetIntegerv(GL_VIEWPORT, viewport);
+
+        winX = x;
+        winY = (float)viewport[3] - (float)y;
+        glReadPixels(x, int(winY), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &winZ);
+
+        gluUnProject(winX, winY, winZ, modelview, projection, viewport, &posX, &posY, &posZ);
+
+        return { posX, posY, posZ };
+#else
+        (void)x;
+        (void)y;
+        return {0,0,0};
+#endif
+    }
+
+    virtual void mousePressEvent ( QMouseEvent * event ) override {
+        mouseCoordTranslate(event->pos().x(),event->pos().y());
+        for(auto o: current_objects) {
+          if(o->underMouse(m_w.x,m_w.y)) {
+            o->mouseDown(m_w.x,m_w.y);
+            clicked_object = o;
+            break;
+          }
+        }
+        updateGL();
+    }
+
+    virtual void mouseReleaseEvent ( QMouseEvent * event ) override {
+        mouseCoordTranslate(event->pos().x(),event->pos().y());
+        if(clicked_object) {
+            clicked_object->mouseUp(m_w.x,m_w.y);
+            clicked_object = nullptr;
+          } else {
+            for(auto o: current_objects) {
+                o->mouseUp(m_w.x,m_w.y);
+              }
+          }
+        updateGL();
+    }
+
+    virtual void mouseDoubleClickEvent ( QMouseEvent * event ) override {
+      (void)event;
+    }
+
+    virtual void mouseMoveEvent(QMouseEvent* event) override {
+      mouseCoordTranslate(event->pos().x(),event->pos().y());
+      if(clicked_object) {
+          clicked_object->hover(m_w.x,m_w.y);
+        } else {
+            for(auto o: current_objects) {
+                if(o->underMouse(m_w.x,m_w.y)) {
+                    o->hover(m_w.x,m_w.y);
+                  } else {
+                    o->unHover();
+                  }
+              }
+          }
+      updateGL();
+    }
+
+    virtual void enterEvent(QEvent * event) override {
+      updateGL();
+      event->accept();
+    }
+
+    virtual void leaveEvent(QEvent * event) override {
+      for(auto o: current_objects) {
+        o->mouseUp(INT_MAX,INT_MAX);
+      }
+      updateGL();
+      (void)event;
+    }
+
+
+
+    virtual void keyPressEvent(QKeyEvent * e) override {
+
+      for(auto o: current_objects) {
+        if (o->isActive()) {
+          o->keyPress(e->key(),e->isAutoRepeat(),KeyboardModifier(int(e->modifiers())));
+          if(e->text().length()!=0)
+            o->charInput(e->text()[0].unicode());
+        }
+      }
+      glMatrixMode( GL_PROJECTION );
+      switch(e->key()) {
+    #ifdef QT_DEBUG
+        case Qt::Key_T: {
+            glRotatef(angle+0.1*(count/10), 1,1,0);
+            count++;
+            break;
+          }
+        case Qt::Key_Y: {
+            count=0;
+            break;
+          }
+    #endif
+        case Qt::Key_A: {
+            glRotatef(0.5, 1,0,0);
+            break;
+          }
+        case Qt::Key_Z: {
+            glRotatef(0.5, 0,1,0);
+            break;
+          }
+        case Qt::Key_Q: {
+            glRotatef(0.5, 0,0,1);
+            break;
+          }
+        case Qt::Key_Return: {
+            if (e->modifiers()==Qt::AltModifier) {
+                setWindowState(windowState() ^ Qt::WindowFullScreen);
+              }
+          }
+        }
+        glMatrixMode( GL_MODELVIEW );
+        updateGL();
+    }
+
+    virtual void keyReleaseEvent(QKeyEvent * e) override {
+        for(auto o: current_objects) {
+          if (o->isActive())
+            o->keyRelease(e->key(),KeyboardModifier(int(e->modifiers())));
+        }
+        updateGL();
+    }
+
+    void mouseCoordTranslate(int x, int y) {
+      m_x = x;
+      m_y = y;
+      m_w = unProject(x,y);
+    }
+
+public:
+
+    void buildMenus() {
+      Texture2D button_texture(":/graphics/button_menu.jpg");
+      main_menu.setPos(200,150);
+      main_menu.setSize(624,724);
+      main_menu
+          .setTexture(Texture2D(":/graphics/dots.png"))
+          .addObject(Button(0,206,512,100,L"New game",button_texture).setClickCallBack(
+                       [&]() {
+                           this->goToMenu(menu_new_game);
+                       }))
+          .addObject(Button(0,316,512,100,L"Load game",button_texture).setClickCallBack(
+                       [&]() {
+                           this->goToMenu(menu_load_game);
+                       }))
+          .addObject(Button(0,426,512,100,L"Join game",button_texture).setClickCallBack(
+                       [&]() {
+                           this->goToMenu(menu_join_game);
+                       }))
+          .addObject(Button(0,536,512,100,L"Host game",button_texture))
+          .addObject(Button(0,746,512,100,L"Exit",button_texture).setClickCallBack(
+                       [&]() {
+                           this->close();
+                         })
+          )
+          .setKeyCallBack(Qt::Key_Escape,MenuItemResponser(4));
+
+      menu_new_game.setPos(200,260);
+      menu_new_game.setSize(624,504);
+      menu_new_game
+          .setTexture(Texture2D(":/graphics/dots.png"))
+          .addObject(Button(0,311,512,100,L"One player",button_texture).setClickCallBack(
+                       [&](){
+                           current_objects.clear();
+                           current_objects.push_back(&*board);
+                        })
+          )
+          .addObject(Button(0,421,512,100,L"Two players",button_texture))
+          .addObject(Button(0,631,512,100,L"Back",button_texture).setClickCallBack(
+                       [&]() {
+                           this->goMenuBack();
+                         }))
+          .setKeyCallBack(Qt::Key_Escape,MenuItemResponser(2));
+
+      menu_load_game.setPos(200,260);
+      menu_load_game.setSize(624,504);
+      menu_load_game
+          .setTexture(Texture2D(":/graphics/dots.png"))
+          .addObject(Button(0,311,512,100,L"Autosave",button_texture))
+          .addObject(Button(0,631,512,100,L"Back",button_texture).setClickCallBack(
+                       [&]() {
+                           this->goMenuBack();
+                         }))
+          .setKeyCallBack(Qt::Key_Escape,MenuItemResponser(1));
+
+      menu_join_game.setPos(200,260);
+      menu_join_game.setSize(624,504);
+      menu_join_game
+          .setTexture(Texture2D(":/graphics/dots.png"))
+          .addObject(Label(L"Enter Host IP:",0,280, QFont("Snap ITC", 32, 40, false))
+                    .setBackground(Texture2D(":/graphics/screwed_background.jpg"))
+                    )
+          .addObject(TextEdit(0,360,512,80,button_texture).setMaxTextLength(-1))
+          .addObject(Button(0,450,512,100,L"Connect",button_texture))
+          .addObject(Button(0,631,512,100,L"Back",button_texture).setClickCallBack(
+                       [&]() {
+                           this->goMenuBack();
+                         }))
+          .setKeyCallBack(Qt::Key_Escape,MenuItemResponser(3));
+    }
+
+    void goMenuBack() {
+      if(!view_history.empty()) {
+        current_objects = view_history.top();
+        view_history.pop();
+      }
+      updateGL();
+    }
+
+    void goToMenu(Menu& menu) {
+      view_history.push(current_objects);
+      current_objects.clear();
+      current_objects.push_back(&menu);
+      updateGL();
+    }
+
+private:
+  int  width, height;
+  Texture2D menu_background_texture;
+
+  Menu main_menu;
+  Menu menu_new_game;
+  Menu menu_load_game;
+  Menu menu_join_game;
+
+  std::shared_ptr<PentagoBoard> board;
+
+  std::vector<RenderObject*> current_objects;
+
+  std::stack<std::vector<RenderObject*>> view_history;
+
+  int m_x, m_y;//mouse window coordinates
+  Point3D m_w;//mouse world coordinates
+
+#ifdef QT_DEBUG
+  float angle;
+  int count;
 #endif
 
-  setFormat(QGLFormat(QGL::DoubleBuffer));
-  setAutoBufferSwap(true);
+  RenderObject* clicked_object;
+
+
+//    IView: (see iview.h)
+public: //some kind of slots
+      virtual void Show_game_ended(WINNER winner, const string& winner_name) override {
+
+      }
+
+      virtual void Set_saves_list(const str_array& save_names,const str_array& saves_info) override {
+
+      }
+
+      virtual void Enable_chat() override  {
+
+      }
+
+      virtual void Disable_chat() override  {
+
+      }
+
+      virtual void Set_game_layout(GAME_LAYOUT layout) override  {
+        switch(layout) {
+          case GAME_LAYOUT::MAIN_MENU: {
+              break;
+            }
+          case GAME_LAYOUT::SAVE_GAME: {
+              break;
+            }
+          case GAME_LAYOUT::LOAD_GAME: {
+              break;
+            }
+          case GAME_LAYOUT::LOBBY: {
+              break;
+            }
+          case GAME_LAYOUT::JOIN_GAME: {
+              break;
+            }
+          case GAME_LAYOUT::GAME: {
+              break;
+            }
+        }
+      }
+
+      virtual void Set_lobby_params(LOBBY_STATUS status, const string& lobby_name = L"", int player_count=-1) override {
+
+      }
+
+      virtual void Set_lobby_player_name(int player_num, const string& name) override {
+
+      }
+
+      virtual void Set_lobby_player_color(int player_num, uint32_t rgb) override {
+
+      }
+
+      virtual void Set_lobby_player_color_charge_enable(int player_num, bool enabled) override {
+
+      }
+
+      virtual void Set_lobby_player_avatar(int player_num, const char* image) override {
+
+      }
+
+      virtual void Set_hosts_list(const str_array& hosts) override  {
+
+      }
+
+      virtual void Clear_board() override {
+
+      }
+
+      virtual void Put_stone(int row, int col, uint32_t rgb) override {
+
+      }
+
+      virtual void Rotate_quadrant(QUADRANT quadrant, DIRECTION direction) override {
+
+      }
+
+      virtual void Disable_rotate_quadrant() override {
+
+      }
+
+      virtual void Enable_rotate_quadrant() override {
+
+      }
+
+      virtual void Show_quick_message(string text, MESSAGE_TYPE type = MESSAGE_TYPE::M_INFO, int mili_sec=0) override {
+
+      }
+
+      virtual void Show_message(string text, MESSAGE_BUTTONS buttons = MESSAGE_BUTTONS::OK, MESSAGE_ICON icon=MESSAGE_ICON::I_NONE) override {
+
+      }
+
+      virtual void Hide_message() override {
+
+      }
+
+      virtual void Ask_user_text_input(const string& question, USER_INPUT_BUTTON_NAME button_accept_text) override {
+
+      }
+
+      virtual void Clear_chat() override {
+
+      }
+
+      virtual void Add_message_to_chat(string from, string text, time_t message_time) override {
+
+      }
+
+	  //signals
+      virtual void Request_enter_game_layout(GAME_LAYOUT layout) override {
+        parent->Request_enter_game_layout(layout);
+      }
+      virtual void Request_show_lobby(int player_count) override {
+        parent->Request_show_lobby(player_count);
+      }
+      virtual void Request_lobby_ready() override {
+        parent->Request_lobby_ready();
+      }
+      virtual void Request_leave_lobby() override {
+        parent->Request_lobby_ready();
+      }
+      virtual void Request_get_saves_list() override {
+        parent->Request_get_saves_list();
+      }
+      virtual void Request_save_game(const string& save_name) override {
+        parent->Request_save_game(save_name);
+      }
+      virtual void Request_load_game(const string& save_name) override {
+        parent->Request_load_game(save_name);
+      }
+      virtual void Request_get_hosts_list() override {
+        parent->Request_get_hosts_list();
+      }
+      virtual void Request_join_game(const string& host_address) override {
+        parent->Request_join_game(host_address);
+      }
+      virtual void Request_host_game(const string& lobby_name, int player_count, const string& password = L"") override {
+        parent->Request_host_game(lobby_name,player_count,password);
+      }
+      virtual void Request_put_stone(int row, int col) override {
+        parent->Request_put_stone(row,col);
+      }
+      virtual void Request_rotate_quadrant(QUADRANT quadrant, DIRECTION direction) override {
+        parent->Request_rotate_quadrant(quadrant,direction);
+      }
+      virtual void Request_send_to_chat(const string& message) override {
+        parent->Request_send_to_chat(message);
+      }
+      virtual void Request_massage_answer(MESSAGE_ANSWER answer) override {
+        parent->Request_massage_answer(answer);
+      }
+      virtual void Request_user_text_output(bool accepted, const string& text) override {
+        parent->Request_user_text_output(accepted,text);
+      }
+      virtual void Request_leave_game() override {
+        parent->Request_leave_game();
+      }
+      virtual void Requset_change_ivew_to_next() override {
+        parent->Requset_change_ivew_to_next();
+      }
+};
+
+GLview::GLview(): impl(new GLviewImpl(this)) {
+  impl->show();
+}
+
+
+GLview::GLview(GLview&& right): impl(new GLviewImpl(&right)) {
+  std::swap(impl, right.impl);
+  impl->setParent(this);
+}
+
+GLview& GLview::operator=(GLview&&right) {
+  std::swap(impl, right.impl);
+  impl->setParent(this);
+  right.impl->setParent(&right);
+  return *this;
 }
 
 GLview::~GLview() {
-  Button::texture_blurr.release();
+  delete impl;
 }
 
-void GLview::buildMenus() {
-  Texture2D button_texture(":/graphics/button_menu.jpg");
-  main_menu.setPos(200,150);
-  main_menu.setSize(624,724);
-  main_menu
-      .setTexture(Texture2D(":/graphics/dots.png"))
-      .addObject(Button(0,206,512,100,"New game",button_texture).setClickCallBack(
-                   [&]() {
-                       this->goToMenu(menu_new_game);
-                   }))
-      .addObject(Button(0,316,512,100,"Load game",button_texture).setClickCallBack(
-                   [&]() {
-                       this->goToMenu(menu_load_game);
-                   }))
-      .addObject(Button(0,426,512,100,"Join game",button_texture).setClickCallBack(
-                   [&]() {
-                       this->goToMenu(menu_join_game);
-                   }))
-      .addObject(Button(0,536,512,100,"Host game",button_texture))
-      .addObject(Button(0,746,512,100,"Exit",button_texture).setClickCallBack(
-                   [&]() {
-                       this->close();
-                     })
-      )
-      .setKeyCallBack(Qt::Key_Escape,MenuItemResponser(4));
+//
+// IView:
+//
 
-  menu_new_game.setPos(200,260);
-  menu_new_game.setSize(624,504);
-  menu_new_game
-      .setTexture(Texture2D(":/graphics/dots.png"))
-      .addObject(Button(0,311,512,100,"One player",button_texture).setClickCallBack(
-                   [&](){
-                       current_objects.clear();
-                       current_objects.push_back(&*board);
-                    })
-      )
-      .addObject(Button(0,421,512,100,"Two players",button_texture))
-      .addObject(Button(0,631,512,100,"Back",button_texture).setClickCallBack(
-                   [&]() {
-                       this->goMenuBack();
-                     }))
-      .setKeyCallBack(Qt::Key_Escape,MenuItemResponser(2));
-
-  menu_load_game.setPos(200,260);
-  menu_load_game.setSize(624,504);
-  menu_load_game
-      .setTexture(Texture2D(":/graphics/dots.png"))
-      .addObject(Button(0,311,512,100,"Autosave",button_texture))
-      .addObject(Button(0,631,512,100,"Back",button_texture).setClickCallBack(
-                   [&]() {
-                       this->goMenuBack();
-                     }))
-      .setKeyCallBack(Qt::Key_Escape,MenuItemResponser(1));
-
-  menu_join_game.setPos(200,260);
-  menu_join_game.setSize(624,504);
-  menu_join_game
-      .setTexture(Texture2D(":/graphics/dots.png"))
-      .addObject(Label("Enter Host IP:",0,280, QFont("Snap ITC", 32, 40, false))
-                .setBackground(Texture2D(":/graphics/screwed_background.jpg"))
-                )
-      .addObject(TextEdit(0,360,512,80,button_texture).setMaxTextLength(-1))
-      .addObject(Button(0,450,512,100,"Connect",button_texture))
-      .addObject(Button(0,631,512,100,"Back",button_texture).setClickCallBack(
-                   [&]() {
-                       this->goMenuBack();
-                     }))
-      .setKeyCallBack(Qt::Key_Escape,MenuItemResponser(3));
+void GLview::Show_game_ended(WINNER winner, const string& winner_name) {
+  impl->Show_game_ended(winner,winner_name);
 }
 
-void GLview::goMenuBack() {
-  if(!view_history.empty()) {
-    current_objects = view_history.top();
-    view_history.pop();
-  }
-  updateGL();
+void GLview::Set_saves_list(const str_array& save_names,const str_array& saves_info) {
+  impl->Set_saves_list(save_names,saves_info);
 }
 
-void GLview::goToMenu(Menu& menu) {
-  view_history.push(current_objects);
-  current_objects.clear();
-  current_objects.push_back(&menu);
-  updateGL();
+void GLview::Set_game_layout(GAME_LAYOUT layout) {
+  impl->Set_game_layout(layout);
 }
 
-void GLview::initializeGL() {
-  Texture2D::setContext(this->context());
-  qDebug() << "GL version: " << (char*)glGetString(GL_VERSION) << endl;
-
-  glEnable(GL_TEXTURE_2D);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glEnableClientState(GL_VERTEX_ARRAY);
-  glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-//  glEnable(GL_DEPTH_TEST);
-
-  Button::texture_blurr.load(":/graphics/glass_blurred.jpg");
-  menu_background_texture.load(":/graphics/background.jpg");
-
-  buildMenus();
-
-  board.reset(new PentagoBoard(12,12,1000,1000,2));
-
-  board->setStoneSetCallBack([&] (int x, int y) {
-      qDebug() << "Stone clicked at: x =" <<x<<"; y ="<<y<<".";
-      board->setStone(x,y);
-      board->setStoneColor(x,y,0.8,0.2,0.4,0.9);
-    });
-  board->setRotateCallBack([&](int quadrant_x, int quadrant_y, bool rotate_right){
-      qDebug() << "Quadrant " << quadrant_x << ", " << quadrant_y << (rotate_right?"rotated to right":"rotated to left");
-      board->rotate(quadrant_x,quadrant_y,rotate_right);
-    });
-
-  current_objects.push_back(&main_menu );
-//  current_objects.push_back(&*board);
-
-//  glEnable(GL_LIGHTING);
-//  glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
-//  glEnable(GL_NORMALIZE);
-
-//  float light0_diffuse[] = {1, 1, 1};
-//  float light0_direction[] = {0.0, 1, 1.0, 0.0};
-
-//  glEnable(GL_LIGHT0);
-
-//  glLightfv(GL_LIGHT0, GL_DIFFUSE, light0_diffuse);
-//  glLightfv(GL_LIGHT0, GL_POSITION, light0_direction);
-//  glNormal3f(0.0, -1, -1.0);
+void GLview::Set_lobby_params(LOBBY_STATUS status, const string& lobby_name, int player_count) {
+  impl->Set_lobby_params(status,lobby_name,player_count);
 }
 
-void GLview::resizeGL(int w, int h) {
-  width = w;
-  height = h;
-  glViewport(0,0,w,h);
-#if !defined(HAVE_GLES)
-  int wh = std::min(w,h);
-  int dx = w-wh;
-  int dy = h-wh;
-  glMatrixMode( GL_PROJECTION );
-    glLoadIdentity();
-//    gluPerspective(45.0f, float(w)/h, -1024.f, 2048.0f);
-    glOrtho(0, w, h, 0, -1024, 1024 );
-    glTranslatef(dx/2.0,dy/2.0,0);
-    glScalef(wh/1024.0,wh/1024.0,1);
-  glMatrixMode( GL_MODELVIEW );
-//  glTranslatef(dx/2.0,dy/2.0,0);
-//  glScalef(wh/1024.0,wh/1024.0,1);
-//  glTranslatef(-1100.0,dy/2.0,0);
-#else
-    glOrthof(0, w, h, 0, -1024, 1024 );
-#endif
+void GLview::Set_lobby_player_name(int player_num, const string& name) {
+  impl->Set_lobby_player_name(player_num,name);
 }
 
-void GLview::paintGL() {
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // чистим буфер
-  glColor4f(1,1,1,1);
-  drawBackground(menu_background_texture);
-
-  for(auto o: current_objects) {
-    o->draw();
-  }
-
-#ifdef QT_DEBUG
-#ifndef HAVE_GLES
-  glColor4f(0.15,0.63,0.02,1);
-  renderText(20,20,QString("Mouse pos: X:%1 Y:%2").arg(m_x).arg(m_y));
-  renderText(20,40,QString("Mouse world pos:"));
-  renderText(20,50,QString("X:%1").arg(m_w.x));
-  renderText(20,60,QString("Y:%1").arg(m_w.y));
-  renderText(20,70,QString("Z:%1").arg(m_w.z));
-  renderText(20,80,QString("Press and hold T or press Y %1").arg(count));
-#else
-  qDebug() << QString("\nMouse pos: X:%1 Y:%2").arg(m_x).arg(m_y);
-#endif
-
-#endif
+void GLview::Set_lobby_player_color(int player_num, uint32_t rgb) {
+  impl->Set_lobby_player_color(player_num,rgb);
 }
 
-void GLview::drawBackground(Texture2D& texture) {
-  glMatrixMode( GL_PROJECTION );
-  glPushMatrix();
-  glLoadIdentity();
-#if !defined(HAVE_GLES)
-  glOrtho(0, width, height, 0, -1, 1 );
-#else
-  glOrthof(0, width, height, 0, -1, 1 );
-#endif
-
-  float back_ratio = texture.width()/float(texture.height());
-  float window_ratio = width/float(height);
-  if(window_ratio>back_ratio) {
-    float tmp = (window_ratio/back_ratio*height-height)/2;
-    texture.draw({GLint(0)    ,GLint(-tmp)},
-                 {GLint(width),GLint(height+tmp)});
-  } else {
-    float tmp = (back_ratio/window_ratio*width-width)/2;
-    texture.draw({GLint(-tmp)     ,GLint(0)},
-                 {GLint(width+tmp),GLint(height)});
-  }
-  glPopMatrix();
-  glMatrixMode(GL_MODELVIEW);
+void GLview::Set_lobby_player_color_charge_enable(int player_num, bool enabled) {
+  impl->Set_lobby_player_color_charge_enable(player_num,enabled);
 }
 
-GLview::Point3D GLview::unProject(int x, int y) {
-#ifndef HAVE_GLES
-    GLint viewport[4];
-    GLdouble modelview[16];
-    GLdouble projection[16];
-    GLfloat winX, winY, winZ;
-    GLdouble posX, posY, posZ;
-
-    glGetDoublev(GL_MODELVIEW_MATRIX, modelview);
-    glGetDoublev(GL_PROJECTION_MATRIX, projection);
-    glGetIntegerv(GL_VIEWPORT, viewport);
-
-    winX = x;
-    winY = (float)viewport[3] - (float)y;
-    glReadPixels(x, int(winY), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &winZ);
-
-    gluUnProject(winX, winY, winZ, modelview, projection, viewport, &posX, &posY, &posZ);
-
-    return { posX, posY, posZ };
-#else
-    (void)x;
-    (void)y;
-    return {0,0,0};
-#endif
+void GLview::Set_lobby_player_avatar(int player_num, const char* image) {
+  impl->Set_lobby_player_avatar(player_num,image);
 }
 
-void GLview::mouseCoordTranslate(int x, int y) {
-  m_x = x;
-  m_y = y;
-  m_w = unProject(x,y);
+void GLview::Set_hosts_list(const str_array& hosts) {
+  impl->Set_hosts_list(hosts);
 }
 
-void GLview::mousePressEvent ( QMouseEvent * event ) {
-    mouseCoordTranslate(event->pos().x(),event->pos().y());
-    for(auto o: current_objects) {
-      if(o->underMouse(m_w.x,m_w.y)) {
-        o->mouseDown(m_w.x,m_w.y);
-        clicked_object = o;
-        break;
-      }
-    }
-    updateGL();
+void GLview::Clear_board() {
+  impl->Clear_board();
 }
 
-void GLview::mouseReleaseEvent ( QMouseEvent * event ) {
-    mouseCoordTranslate(event->pos().x(),event->pos().y());
-    if(clicked_object) {
-        clicked_object->mouseUp(m_w.x,m_w.y);
-        clicked_object = nullptr;
-      } else {
-        for(auto o: current_objects) {
-            o->mouseUp(m_w.x,m_w.y);
-          }
-      }
-    updateGL();
+void GLview::Put_stone(int row, int col, uint32_t rgb) {
+  impl->Put_stone(row,col,rgb);
 }
 
-void GLview::mouseDoubleClickEvent ( QMouseEvent * event ) {
-  (void)event;
+void GLview::Rotate_quadrant(QUADRANT quadrant, DIRECTION direction) {
+  impl->Rotate_quadrant(quadrant,direction);
 }
 
-void GLview::mouseMoveEvent(QMouseEvent* event) {
-  mouseCoordTranslate(event->pos().x(),event->pos().y());
-  if(clicked_object) {
-      clicked_object->hover(m_w.x,m_w.y);
-    } else {
-        for(auto o: current_objects) {
-            if(o->underMouse(m_w.x,m_w.y)) {
-                o->hover(m_w.x,m_w.y);
-              } else {
-                o->unHover();
-              }
-          }
-      }
-  updateGL();
+void GLview::Disable_rotate_quadrant() {
+  impl->Disable_rotate_quadrant();
 }
 
-void GLview::enterEvent(QEvent * event) {
-  updateGL();
-  event->accept();
+void GLview::Enable_rotate_quadrant() {
+  impl->Enable_rotate_quadrant();
 }
 
-void GLview::leaveEvent(QEvent * event) {
-  for(auto o: current_objects) {
-    o->mouseUp(INT_MAX,INT_MAX);
-  }
-  updateGL();
-  (void)event;
+void GLview::Show_quick_message(string text, MESSAGE_TYPE type, int mili_sec) {
+  impl->Show_quick_message(text,type,mili_sec);
+}
+
+void GLview::Show_message(string text, MESSAGE_BUTTONS buttons, MESSAGE_ICON icon) {
+  impl->Show_message(text,buttons,icon);
+}
+
+void GLview::Hide_message() {
+  impl->Hide_message();
+}
+
+void GLview::Ask_user_text_input(const string& question, USER_INPUT_BUTTON_NAME button_accept_text) {
+  impl->Ask_user_text_input(question,button_accept_text);
+}
+
+void GLview::Enable_chat() {
+  impl->Enable_chat();
+}
+
+void GLview::Disable_chat() {
+  impl->Disable_chat();
+}
+
+void GLview::Clear_chat() {
+  impl->Clear_chat();
+}
+
+void GLview::Add_message_to_chat(string from, string text, time_t message_time) {
+  impl->Add_message_to_chat(from,text,message_time);
 }
 
 
-
-void GLview::keyPressEvent(QKeyEvent * e) {
-  for(auto o: current_objects) {
-    if (o->isActive()) {
-      o->keyPress(e->key(),e->isAutoRepeat(),KeyboardModifier(int(e->modifiers())));
-      if(e->text().length()!=0)
-        o->charInput(e->text()[0].unicode());
-    }
-  }
-  glMatrixMode( GL_PROJECTION );
-  switch(e->key()) {
-#ifdef QT_DEBUG
-    case Qt::Key_T: {
-        glRotatef(angle+0.1*(count/10), 1,1,0);
-        count++;
-        break;
-      }
-    case Qt::Key_Y: {
-        count=0;
-        break;
-      }
-#endif
-    case Qt::Key_A: {
-        glRotatef(0.5, 1,0,0);
-        break;
-      }
-    case Qt::Key_Z: {
-        glRotatef(0.5, 0,1,0);
-        break;
-      }
-    case Qt::Key_Q: {
-        glRotatef(0.5, 0,0,1);
-        break;
-      }
-    case Qt::Key_Return: {
-        if (e->modifiers()==Qt::AltModifier) {
-            setWindowState(windowState() ^ Qt::WindowFullScreen);
-          }
-      }
-    }
-    glMatrixMode( GL_MODELVIEW );
-    updateGL();
+//signals
+void GLview::Request_enter_game_layout(GAME_LAYOUT layout) {
+    qDebug() << "Request_enter_game_layout: "
+             << "layout=" << int(layout);
 }
 
-void GLview::keyReleaseEvent(QKeyEvent * e) {
-    for(auto o: current_objects) {
-      if (o->isActive())
-        o->keyRelease(e->key(),KeyboardModifier(int(e->modifiers())));
-    }
-    updateGL();
+void GLview::Request_show_lobby(int player_count) {
+  qDebug() << "Request_show_lobby: "
+           << "player_count=" << player_count;
+}
+
+void GLview::Request_lobby_ready() {
+  qDebug() << "Request_lobby_ready";
+}
+
+void GLview::Request_leave_lobby() {
+  qDebug() << "Request_leave_lobby";
+}
+
+void GLview::Request_get_saves_list() {
+  qDebug() << "Request_get_saves_list";
+}
+
+void GLview::Request_save_game(const string& save_name) {
+  qDebug() << "Request_save_game: "
+           << "save_name=" << QString::fromStdWString(save_name);
+}
+
+void GLview::Request_load_game(const string& save_name) {
+  qDebug() << "Request_load_game: "
+           << "save_name=" << QString::fromStdWString(save_name);
+}
+
+void GLview::Request_get_hosts_list() {
+  qDebug() << "Request_get_hosts_list";
+}
+
+void GLview::Request_join_game(const string& host_address) {
+  qDebug() << "Request_join_game: "
+           << "host_address=" << QString::fromStdWString(host_address);
+}
+
+void GLview::Request_host_game(const string& lobby_name, int player_count, const string& password) {
+  qDebug() << "Request_host_game: "
+           << "name=" <<  QString::fromStdWString(lobby_name) << ' '
+           << "player_count=" << player_count << ' '
+           << "password=" <<  QString::fromStdWString(password);
+}
+
+void GLview::Request_put_stone(int row, int col) {
+  qDebug() << "Request_put_stone: "
+           << "row=" << row << ' '
+           << "col=" << col;
+}
+
+void GLview::Request_rotate_quadrant(QUADRANT quadrant, DIRECTION direction) {
+  qDebug() << "Request_rotate_quadrant: "
+           << "quadrant=" << int(quadrant) << ' '
+           << "direction=" << int(direction);
+}
+
+void GLview::Request_send_to_chat(const string& message) {
+  qDebug() << "Request_send_to_chat: "
+           << "message=" << QString::fromStdWString(message);
+}
+
+void GLview::Request_massage_answer(MESSAGE_ANSWER answer) {
+  qDebug() << "Request_massage_answer: "
+           << "answer=" << int(answer);
+}
+
+void GLview::Request_user_text_output(bool accepted, const string& text) {
+  qDebug() << "Request_user_text_output: "   
+           << "accepted=" << accepted
+           << "text=" << QString::fromStdWString(text);
+}
+
+void GLview::Request_leave_game() {
+  qDebug() << "Request_leave_game";
+}
+
+
+void GLview::Requset_change_ivew_to_next() {
+  qDebug() << "Requset_change_ivew_to_next";
 }
 

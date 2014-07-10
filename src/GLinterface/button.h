@@ -19,7 +19,7 @@ public:
          GLint y_left_top = 0,
          GLint width = 0,
          GLint height = 0,
-         const string& caption = "Button",
+         const string &caption = L"Button",
          const Texture2D& texture = Texture2D());
 
   Button& setTexture(const Texture2D& texture);

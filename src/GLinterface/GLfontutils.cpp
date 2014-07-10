@@ -157,9 +157,9 @@ const QFontMetrics& GLfont::fontMetrics() const
 }
 
 //! Renders text at given x, y.
-void GLfont::renderText(GLfloat x, GLfloat y, const QString &text)
+void GLfont::renderText(GLfloat x, GLfloat y, const string &text)
 {
-    if(text.isEmpty()) return;
+    if(text.empty()) return;
     // If the current context's device is not active for painting, the
     // texture generation does not work. This may be specific to the way
     // MIFit is setup.
@@ -178,7 +178,7 @@ void GLfont::renderText(GLfloat x, GLfloat y, const QString &text)
     GLuint texture = 0;
 //    glTranslatef(x, y, 0);
     GLRectangleCoord<GLfloat> char_pos(x,y);
-    for (int i = 0; i < text.length(); ++i)
+    for (unsigned i = 0; i < text.length(); ++i)
     {
         CharData &c = d->createCharacter(text[i]);
         if (texture != c.textureId)
@@ -216,11 +216,11 @@ void GLfont::renderText(GLfloat x, GLfloat y, const QString &text)
 //    glPopAttrib();
 }
 
-void GLfont::renderTextCroped(GLfloat x, GLfloat y, const QString &text, GLfloat x_left, GLfloat x_right) {
-    if(text.isEmpty()) return;
+void GLfont::renderTextCroped(GLfloat x, GLfloat y, const string &text, GLfloat x_left, GLfloat x_right) {
+    if(text.empty()) return;
     GLuint texture = 0;
     GLRectangleCoord<GLfloat> char_pos(x,y);
-    for (int i = 0; i < text.length(); ++i)
+    for (unsigned i = 0; i < text.length(); ++i)
     {
         CharData &c = d->createCharacter(text[i]);
         if (texture != c.textureId)

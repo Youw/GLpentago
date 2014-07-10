@@ -10,6 +10,6 @@ int main(int argc, char *argv[])
   QApplication::addLibraryPath(tmpPath+"/QTplaggins");
   QApplication a(argc, argv);
   GLview w;
-  w.show();
+  (void)w;
   return a.exec();
 }

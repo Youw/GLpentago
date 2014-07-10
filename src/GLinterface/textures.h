@@ -10,8 +10,9 @@
 //QT staff
 #include <QString>
 #include <QGLContext>
-typedef QString string;
-typedef QGLContext Tcontext;
+
+using string = std::wstring;
+using Tcontext = QGLContext;
 //
 
 template<typename T>
@@ -32,7 +33,7 @@ struct Texture2DInfo {
 class Texture2D
 {
   Texture2DInfo info;
-  string filename;
+  QString filename;
   GLdouble crop[4][2];
   static Tcontext* context;
 public:
@@ -42,14 +43,14 @@ public:
 
   //construct and load texture from file
   // "" - means empty texture
-  Texture2D(const string& filename = "");
+  Texture2D(const QString& filename = "");
   ~Texture2D();
 
   Texture2D(const Texture2D& right);
   Texture2D& operator=(const Texture2D& right);
 
   //release current and load new texture from filename
-  bool load(const string& filename);
+  bool load(const QString &filename);
   //release this texture resources
   void release();
 

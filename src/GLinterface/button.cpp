@@ -6,12 +6,11 @@
 
 Texture2D Button::texture_blurr;
 
-Button::Button(
-               GLint x_left_top,
+Button::Button(GLint x_left_top,
                GLint y_left_top,
                GLint width,
                GLint height,
-               const string& caption,
+               const string &caption,
                const Texture2D& texture):
     pos(x_left_top, y_left_top),
     text(caption),

@@ -8,11 +8,14 @@
 #endif
 
 #include <QtGlobal>
+#include <string>
+
 
 class QChar;
 class QFont;
 class QFontMetrics;
-class QString;
+
+using string = std::wstring;
 
 namespace glutils
 {
@@ -28,8 +31,8 @@ public:
     const QFont& font() const;
     const QFontMetrics& fontMetrics() const;
 
-    void renderText(GLfloat x, GLfloat y, const QString &text);
-    void renderTextCroped(GLfloat x, GLfloat y, const QString &text, GLfloat x_left, GLfloat x_right);
+    void renderText(GLfloat x, GLfloat y, const string &text);
+    void renderTextCroped(GLfloat x, GLfloat y, const string &text, GLfloat x_left, GLfloat x_right);
 
 private:
     Q_DISABLE_COPY(GLfont)
