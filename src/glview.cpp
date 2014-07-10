@@ -64,14 +64,20 @@ void GLview::buildMenus() {
       .addObject(Button(0,746,512,100,"Exit",button_texture).setClickCallBack(
                    [&]() {
                        this->close();
-                     }))
+                     })
+      )
       .setKeyCallBack(Qt::Key_Escape,MenuItemResponser(4));
 
   menu_new_game.setPos(200,260);
   menu_new_game.setSize(624,504);
   menu_new_game
       .setTexture(Texture2D(":/graphics/dots.png"))
-      .addObject(Button(0,311,512,100,"One player",button_texture))
+      .addObject(Button(0,311,512,100,"One player",button_texture).setClickCallBack(
+                   [&](){
+                       current_objects.clear();
+                       current_objects.push_back(&*board);
+                    })
+      )
       .addObject(Button(0,421,512,100,"Two players",button_texture))
       .addObject(Button(0,631,512,100,"Back",button_texture).setClickCallBack(
                    [&]() {

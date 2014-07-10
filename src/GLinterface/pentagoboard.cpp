@@ -126,23 +126,26 @@ public:
 
     if(right_direction) {
         stones[0][0] = stones[0][2];
-        stones[0][1] = stones[1][2];
         stones[0][2] = stones[2][2];
-        stones[1][2] = stones[2][1];
         stones[2][2] = stones[2][0];
-        stones[2][1] = stones[1][0];
         stones[2][0] = tmp1;
+
+        stones[0][1] = stones[1][2];
+        stones[1][2] = stones[2][1];
+        stones[2][1] = stones[1][0];
         stones[1][0] = tmp2;
 
       } else {
         stones[0][0] = stones[2][0];
-        stones[1][0] = stones[2][1];
         stones[2][0] = stones[2][2];
-        stones[2][1] = stones[1][2];
         stones[2][2] = stones[0][2];
-        stones[1][2] = stones[0][1];
         stones[0][2] = tmp1;
-        stones[0][1] = tmp2;
+
+
+        stones[0][1] = stones[1][0];
+        stones[1][0] = stones[2][1];
+        stones[2][1] = stones[1][2];
+        stones[1][2] = tmp2;
       }
     reposStones();
     setParent(parent);
