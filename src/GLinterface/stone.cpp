@@ -14,7 +14,11 @@ Stone::Stone(GLint x_left_top,
 }
 
 Stone& Stone::setSize(int width, int height) {
+  if (setted)
+    pos = decltype(pos) (pos.posX()+pos.width(),pos.posY()+pos.height(),-pos.width(),-pos.height());
   pos.setSize(width,height);
+  if (setted)
+    pos = decltype(pos) (pos.posX()+pos.width(),pos.posY()+pos.height(),-pos.width(),-pos.height());
   return *this;
 }
 
@@ -32,6 +36,10 @@ Stone& Stone::setColor(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha) 
   color[2] = blue;
   color[3] = alpha;
   return *this;
+}
+
+const GLfloat* Stone::getColor() const {
+  return color;
 }
 
 Stone& Stone::setTexture(const Texture2D& txtr) {
@@ -116,7 +124,12 @@ bool Stone::underMouse(int x, int y) const {
 }
 
 void Stone::setPos(int x, int y) {
+  if (setted)
+    pos = decltype(pos) (pos.posX()+pos.width(),pos.posY()+pos.height(),-pos.width(),-pos.height());
   pos.setPos(x,y);
+  if (setted)
+    pos = decltype(pos) (pos.posX()+pos.width(),pos.posY()+pos.height(),-pos.width(),-pos.height());
+
 }
 
 int Stone::posX() const {
