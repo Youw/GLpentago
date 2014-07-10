@@ -6,7 +6,7 @@
 //#include "GL/gl.h"
 #include <QtOpenGL>
 
-#include "climits"
+#include <climits>
 
 template<typename Keeper>
 class FontKeeperBase

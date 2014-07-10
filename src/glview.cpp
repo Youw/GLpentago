@@ -149,8 +149,8 @@ void GLview::initializeGL() {
       board->rotate(quadrant_x,quadrant_y,rotate_right);
     });
 
-//  current_objects.push_back(&main_menu );
-  current_objects.push_back(&*board);
+  current_objects.push_back(&main_menu );
+//  current_objects.push_back(&*board);
 
 //  glEnable(GL_LIGHTING);
 //  glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
@@ -277,7 +277,7 @@ void GLview::mousePressEvent ( QMouseEvent * event ) {
       if(o->underMouse(m_w.x,m_w.y)) {
         o->mouseDown(m_w.x,m_w.y);
         clicked_object = o;
-        return;
+        break;
       }
     }
     updateGL();

@@ -2,7 +2,7 @@
 
 #include <QGLWidget>
 
-#include <limits>
+#include <climits>
 
 Texture2D Button::texture_blurr;
 
@@ -97,7 +97,7 @@ Button& Button::setPressed(bool pressed) {
     const GLint* color = text.getFontColor();
     if (pressed) {
       alpha_color_bak = color[3];
-      text.setFontColor4d(color[0],color[1],color[2],0.7);
+      text.setFontColor4i(color[0],color[1],color[2],0.7*INT_MAX);
     }
     else
       text.setFontColor4i(color[0],color[1],color[2],alpha_color_bak);

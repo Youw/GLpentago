@@ -51,12 +51,12 @@ void Label::draw() const {
                      {x_pos+text_width+a,y_pos+height()},
                      {x_pos-a,y_pos+height()});
   }
-  glColor4f(double(font_color[0])*INT_MAX,double(font_color[1])*INT_MAX,double(font_color[2])*INT_MAX,double(font_color[3])*INT_MAX);
+  glColor4f(double(font_color[0])/INT_MAX,double(font_color[1])/INT_MAX,double(font_color[2])/INT_MAX,double(font_color[3])/INT_MAX);
   text_font->renderText(x_pos,y_pos,text);
 }
 
 void Label::drawCroped(int x_left, int x_right) const {
-  glColor4f(double(font_color[0])*INT_MAX,double(font_color[1])*INT_MAX,double(font_color[2])*INT_MAX,double(font_color[3])*INT_MAX);
+  glColor4f(double(font_color[0])/INT_MAX,double(font_color[1])/INT_MAX,double(font_color[2])/INT_MAX,double(font_color[3])/INT_MAX);
   text_font->renderTextCroped(x_pos,y_pos,text,x_left, x_right);
 }
 
