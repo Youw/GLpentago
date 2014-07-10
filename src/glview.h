@@ -56,7 +56,7 @@ public: //some kind of slots
 
     virtual void Hide_message() override;
 
-    virtual void Ask_user_text_input(const string& question, USER_INPUT_BUTTON_NAME button_accept_text) override;
+    virtual void Ask_user_text_input(const string& question, const string& button_accept_text) override;
 
     virtual void Clear_chat() override;
     virtual void Add_message_to_chat(string from, string text, time_t message_time) override;
@@ -83,7 +83,7 @@ public://signals to presenter
 
     virtual void Request_massage_answer(MESSAGE_ANSWER answer) override;
 
-    virtual void Request_user_text_output(bool accepted, const string& text) override;
+    virtual void Request_user_text_input(bool accepted, const string& text) override;
 
     virtual void Request_leave_game() override;
 

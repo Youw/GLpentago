@@ -39,7 +39,7 @@ public:
     enum class DIRECTION{LEFT, RIGHT};      /*  for quadrant rotation   */
 
     enum class MESSAGE_TYPE{M_INFO, M_WARNING, M_ERROR, M_TIP};
-	
+
     enum class MESSAGE_BUTTONS {
 	OK,
 	YES_NO,
@@ -67,11 +67,6 @@ public:
 	READY /*player ready to start and waiting for others*/
     };
 	
-    enum class USER_INPUT_BUTTON_NAME {
-      B_OK,/*show text "OK" on accept button*/
-      B_SAVE /*show text "SAVE" on accept button*/
-    };
-
     //for Show_game_ended
     enum class WINNER {
       I_WIN, /*fireworks cakes and explosion*/
@@ -83,7 +78,7 @@ public:
 //none of slots or signals can be blockable
 public: //some kind of slots
 	virtual void Show_game_ended(WINNER winner, const string& winner_name)=0;
-	//if winner==NO_ONE_WIN, winner_name must be ignored
+	//if winner==NO_ONE_WON, winner_name must be ignored
 
 	virtual void Set_saves_list(const str_array& save_names,const str_array& saves_info)=0;
 	
@@ -109,14 +104,14 @@ public: //some kind of slots
 	
 	virtual void Disable_rotate_quadrant()=0;
 	virtual void Enable_rotate_quadrant()=0;
-	
+
 	virtual void Show_quick_message(string text, MESSAGE_TYPE type = MESSAGE_TYPE::M_INFO, int mili_sec=0)=0; /*show some text to player during the game*/
 	//mili_sec - time how long it should be displayed. If 0 - until the next message
 	virtual void Show_message(string text, MESSAGE_BUTTONS buttons = MESSAGE_BUTTONS::OK, MESSAGE_ICON icon=MESSAGE_ICON::I_NONE)=0;
 	/*show some text to player during the game*/
-	virtual void Hide_message()=0;/*ti hide current message*/
+	virtual void Hide_message()=0;/*to hide current message*/
 	
-	virtual void Ask_user_text_input(const string& question, USER_INPUT_BUTTON_NAME button_accept_text)=0;
+	virtual void Ask_user_text_input(const string& question, const string& button_accept_text)=0;
 	
 	virtual void Clear_chat()=0;
 	virtual void Add_message_to_chat(string from, string text, time_t message_time)=0;
@@ -143,7 +138,7 @@ public: //signals to presenter
 	
 	virtual void Request_massage_answer(MESSAGE_ANSWER answer)=0;
 
-	virtual void Request_user_text_output(bool accepted, const string& text)=0;
+	virtual void Request_user_text_input(bool accepted, const string& text)=0;
 	
 	virtual void Request_leave_game()=0;
 

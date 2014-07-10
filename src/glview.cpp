@@ -527,7 +527,7 @@ public: //some kind of slots
 
       }
 
-      virtual void Ask_user_text_input(const string& question, USER_INPUT_BUTTON_NAME button_accept_text) override {
+      virtual void Ask_user_text_input(const string& question, const string& button_accept_text) override {
 
       }
 
@@ -582,8 +582,8 @@ public: //some kind of slots
       virtual void Request_massage_answer(MESSAGE_ANSWER answer) override {
         parent->Request_massage_answer(answer);
       }
-      virtual void Request_user_text_output(bool accepted, const string& text) override {
-        parent->Request_user_text_output(accepted,text);
+      virtual void Request_user_text_input(bool accepted, const string& text) override {
+        parent->Request_user_text_input(accepted,text);
       }
       virtual void Request_leave_game() override {
         parent->Request_leave_game();
@@ -686,7 +686,7 @@ void GLview::Hide_message() {
   impl->Hide_message();
 }
 
-void GLview::Ask_user_text_input(const string& question, USER_INPUT_BUTTON_NAME button_accept_text) {
+void GLview::Ask_user_text_input(const string& question, const string &button_accept_text) {
   impl->Ask_user_text_input(question,button_accept_text);
 }
 
@@ -778,7 +778,7 @@ void GLview::Request_massage_answer(MESSAGE_ANSWER answer) {
            << "answer=" << int(answer);
 }
 
-void GLview::Request_user_text_output(bool accepted, const string& text) {
+void GLview::Request_user_text_input(bool accepted, const string& text) {
   qDebug() << "Request_user_text_output: "   
            << "accepted=" << accepted
            << "text=" << QString::fromStdWString(text);
