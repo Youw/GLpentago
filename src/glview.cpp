@@ -25,10 +25,46 @@
 #include <stack>
 
 class GLview::GLviewImpl: public QGLWidget, public IView {
+public:
+
+  struct Point3D {
+    GLdouble x,y,z;
+  };
 
 private:
     GLview * parent;
+
+    int  width, height;
+    Texture2D menu_background_texture;
+
+    Menu main_menu;
+    Menu menu_new_game;
+    Menu menu_n_players;
+
+    Menu menu_load_game;
+    Menu menu_save_game;
+
+    Menu menu_join_game;
+    Menu menu_host_game;
+
+    std::shared_ptr<PentagoBoard> board;
+
+    std::vector<RenderObject*> current_objects;
+
+    std::stack<std::vector<RenderObject*>> view_history;
+
+    int m_x, m_y;//mouse window coordinates
+    Point3D m_w;//mouse world coordinates
+
+  #ifdef QT_DEBUG
+    float angle;
+    int count;
+  #endif
+
+    RenderObject* clicked_object;
+
 public:
+
     GLviewImpl(GLview * gl_parent=0, QWidget *qt_parent=0): QGLWidget(qt_parent), parent(gl_parent) {
       clicked_object = nullptr;
       setWindowIcon(QIcon(":/window/pentago.ico"));
@@ -90,9 +126,6 @@ protected:
           board->rotate(quadrant_x,quadrant_y,rotate_right);
         });
 
-      current_objects.push_back(&main_menu );
-    //  current_objects.push_back(&*board);
-
     }
 
     virtual void resizeGL(int w, int h) override {
@@ -105,14 +138,10 @@ protected:
       int dy = h-wh;
       glMatrixMode( GL_PROJECTION );
         glLoadIdentity();
-    //    gluPerspective(45.0f, float(w)/h, -1024.f, 2048.0f);
         glOrtho(0, w, h, 0, -1024, 1024 );
         glTranslatef(dx/2.0,dy/2.0,0);
         glScalef(wh/1024.0,wh/1024.0,1);
       glMatrixMode( GL_MODELVIEW );
-    //  glTranslatef(dx/2.0,dy/2.0,0);
-    //  glScalef(wh/1024.0,wh/1024.0,1);
-    //  glTranslatef(-1100.0,dy/2.0,0);
 #else // !defined(HAVE_GLES)
         glOrthof(0, w, h, 0, -1024, 1024 );
 #endif // !defined(HAVE_GLES)
@@ -143,61 +172,6 @@ protected:
 #endif //QT_DEBUG
     }
 // // QGLWidget
-
-    void drawBackground(Texture2D& texture) {
-      glMatrixMode( GL_PROJECTION );
-      glPushMatrix();
-      glLoadIdentity();
-    #if !defined(HAVE_GLES)
-      glOrtho(0, width, height, 0, -1, 1 );
-    #else
-      glOrthof(0, width, height, 0, -1, 1 );
-    #endif
-
-      float back_ratio = texture.width()/float(texture.height());
-      float window_ratio = width/float(height);
-      if(window_ratio>back_ratio) {
-        float tmp = (window_ratio/back_ratio*height-height)/2;
-        texture.draw({GLint(0)    ,GLint(-tmp)},
-                     {GLint(width),GLint(height+tmp)});
-      } else {
-        float tmp = (back_ratio/window_ratio*width-width)/2;
-        texture.draw({GLint(-tmp)     ,GLint(0)},
-                     {GLint(width+tmp),GLint(height)});
-      }
-      glPopMatrix();
-      glMatrixMode(GL_MODELVIEW);
-    }
-
-    struct Point3D {
-      GLdouble x,y,z;
-    };
-
-    Point3D unProject(int x, int y) {
-#ifndef HAVE_GLES
-        GLint viewport[4];
-        GLdouble modelview[16];
-        GLdouble projection[16];
-        GLfloat winX, winY, winZ;
-        GLdouble posX, posY, posZ;
-
-        glGetDoublev(GL_MODELVIEW_MATRIX, modelview);
-        glGetDoublev(GL_PROJECTION_MATRIX, projection);
-        glGetIntegerv(GL_VIEWPORT, viewport);
-
-        winX = x;
-        winY = (float)viewport[3] - (float)y;
-        glReadPixels(x, int(winY), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &winZ);
-
-        gluUnProject(winX, winY, winZ, modelview, projection, viewport, &posX, &posY, &posZ);
-
-        return { posX, posY, posZ };
-#else
-        (void)x;
-        (void)y;
-        return {0,0,0};
-#endif
-    }
 
     virtual void mousePressEvent ( QMouseEvent * event ) override {
         mouseCoordTranslate(event->pos().x(),event->pos().y());
@@ -246,7 +220,7 @@ protected:
 
     virtual void enterEvent(QEvent * event) override {
       updateGL();
-      event->accept();
+      (void)event;
     }
 
     virtual void leaveEvent(QEvent * event) override {
@@ -317,7 +291,58 @@ protected:
       m_w = unProject(x,y);
     }
 
-public:
+protected:
+
+    void drawBackground(Texture2D& texture) {
+      glMatrixMode( GL_PROJECTION );
+      glPushMatrix();
+      glLoadIdentity();
+    #if !defined(HAVE_GLES)
+      glOrtho(0, width, height, 0, -1, 1 );
+    #else
+      glOrthof(0, width, height, 0, -1, 1 );
+    #endif
+
+      float back_ratio = texture.width()/float(texture.height());
+      float window_ratio = width/float(height);
+      if(window_ratio>back_ratio) {
+        float tmp = (window_ratio/back_ratio*height-height)/2;
+        texture.draw({GLint(0)    ,GLint(-tmp)},
+                     {GLint(width),GLint(height+tmp)});
+      } else {
+        float tmp = (back_ratio/window_ratio*width-width)/2;
+        texture.draw({GLint(-tmp)     ,GLint(0)},
+                     {GLint(width+tmp),GLint(height)});
+      }
+      glPopMatrix();
+      glMatrixMode(GL_MODELVIEW);
+    }
+
+    Point3D unProject(int x, int y) {
+#ifndef HAVE_GLES
+        GLint viewport[4];
+        GLdouble modelview[16];
+        GLdouble projection[16];
+        GLfloat winX, winY, winZ;
+        GLdouble posX, posY, posZ;
+
+        glGetDoublev(GL_MODELVIEW_MATRIX, modelview);
+        glGetDoublev(GL_PROJECTION_MATRIX, projection);
+        glGetIntegerv(GL_VIEWPORT, viewport);
+
+        winX = x;
+        winY = (float)viewport[3] - (float)y;
+        glReadPixels(x, int(winY), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &winZ);
+
+        gluUnProject(winX, winY, winZ, modelview, projection, viewport, &posX, &posY, &posZ);
+
+        return { posX, posY, posZ };
+#else
+        (void)x;
+        (void)y;
+        return {0,0,0};
+#endif
+    }
 
     void buildMenus() {
       Texture2D button_texture(":/graphics/button_menu.jpg");
@@ -404,31 +429,6 @@ public:
       updateGL();
     }
 
-private:
-  int  width, height;
-  Texture2D menu_background_texture;
-
-  Menu main_menu;
-  Menu menu_new_game;
-  Menu menu_load_game;
-  Menu menu_join_game;
-
-  std::shared_ptr<PentagoBoard> board;
-
-  std::vector<RenderObject*> current_objects;
-
-  std::stack<std::vector<RenderObject*>> view_history;
-
-  int m_x, m_y;//mouse window coordinates
-  Point3D m_w;//mouse world coordinates
-
-#ifdef QT_DEBUG
-  float angle;
-  int count;
-#endif
-
-  RenderObject* clicked_object;
-
 
 //    IView: (see iview.h)
 public: //some kind of slots
@@ -451,6 +451,11 @@ public: //some kind of slots
       virtual void Set_game_layout(GAME_LAYOUT layout) override  {
         switch(layout) {
           case GAME_LAYOUT::MAIN_MENU: {
+              while(view_history.size()) {
+                  view_history.pop();
+                }
+              current_objects.clear();
+              current_objects.push_back(&main_menu);
               break;
             }
           case GAME_LAYOUT::SAVE_GAME: {
@@ -469,6 +474,7 @@ public: //some kind of slots
               break;
             }
         }
+        updateGL();
       }
 
       virtual void Set_lobby_params(LOBBY_STATUS status, const string& lobby_name = L"", int player_count=-1) override {
