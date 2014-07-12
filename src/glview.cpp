@@ -35,7 +35,7 @@ private:
     GLview * parent;
 
     int  width, height;
-    Texture2D menu_background_texture;
+    Texture2D texture_menu_background;
 
     Menu main_menu;
     Menu menu_new_game;
@@ -86,6 +86,12 @@ public:
       setAutoBufferSwap(true);
     }
 
+    GLviewImpl(const GLviewImpl&) = delete;
+    GLviewImpl& operator=(const GLviewImpl&) = delete;
+
+    GLviewImpl(GLviewImpl&&) = delete;
+    GLviewImpl& operator=(GLviewImpl&&) = delete;
+
     virtual ~GLviewImpl() {
       Button::texture_blurr.release();//kind of bugfix
     }
@@ -110,20 +116,22 @@ protected:
       glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
       Button::texture_blurr.load(":/graphics/glass_blurred.jpg");
-      menu_background_texture.load(":/graphics/background.jpg");
+      texture_menu_background.load(":/graphics/background.jpg");
 
       buildMenus();
 
       board.reset(new PentagoBoard(12,12,1000,1000,2));
 
       board->setStoneSetCallBack([&] (int x, int y) {
-          qDebug() << "Stone clicked at: x =" <<x<<"; y ="<<y<<".";
-          board->setStone(x,y);
-          board->setStoneColor(x,y,0.8,0.2,0.4,0.9);
+          Request_put_stone(x,y);
         });
       board->setRotateCallBack([&](int quadrant_x, int quadrant_y, bool rotate_right){
-          qDebug() << "Quadrant " << quadrant_x << ", " << quadrant_y << (rotate_right?"rotated to right":"rotated to left");
-          board->rotate(quadrant_x,quadrant_y,rotate_right);
+          static const QUADRANT quadrants[3][3] = {
+            {QUADRANT::II,  QUADRANT::I,  QUADRANT::IX},
+            {QUADRANT::III, QUADRANT::IV, QUADRANT::VIII},
+            {QUADRANT::V,   QUADRANT::VI, QUADRANT::VII}
+          };
+          Request_rotate_quadrant(quadrants[quadrant_x][quadrant_y],rotate_right?DIRECTION::RIGHT:DIRECTION::LEFT);
         });
 
     }
@@ -150,7 +158,7 @@ protected:
     virtual void paintGL() override {
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
       glColor4f(1,1,1,1);
-      drawBackground(menu_background_texture);
+      drawBackground(texture_menu_background);
 
       for(auto o: current_objects) {
         o->draw();
@@ -293,7 +301,7 @@ protected:
 
 protected:
 
-    void drawBackground(Texture2D& texture) {
+    void drawBackground(const Texture2D& texture) {
       glMatrixMode( GL_PROJECTION );
       glPushMatrix();
       glLoadIdentity();
@@ -352,40 +360,68 @@ protected:
           .setTexture(Texture2D(":/graphics/dots.png"))
           .addObject(Button(0,206,512,100,L"New game",button_texture).setClickCallBack(
                        [&]() {
-                           this->goToMenu(menu_new_game);
+                           goToMenu(menu_new_game);
                        }))
           .addObject(Button(0,316,512,100,L"Load game",button_texture).setClickCallBack(
                        [&]() {
-                           this->goToMenu(menu_load_game);
+                           Request_enter_game_layout(GAME_LAYOUT::LOAD_GAME);
                        }))
           .addObject(Button(0,426,512,100,L"Join game",button_texture).setClickCallBack(
                        [&]() {
-                           this->goToMenu(menu_join_game);
+                           Request_enter_game_layout(GAME_LAYOUT::JOIN_GAME);
                        }))
-          .addObject(Button(0,536,512,100,L"Host game",button_texture))
+          .addObject(Button(0,536,512,100,L"Host game",button_texture).setClickCallBack(
+                       [&]() {
+                           goToMenu(menu_host_game);
+                       }))
           .addObject(Button(0,746,512,100,L"Exit",button_texture).setClickCallBack(
                        [&]() {
                            this->close();
                          })
           )
-          .setKeyCallBack(Qt::Key_Escape,MenuItemResponser(4));
+          .setKeyCallBack(Qt::Key_Escape,MenuItemClicker(4));
 
       menu_new_game.setPos(200,260);
       menu_new_game.setSize(624,504);
       menu_new_game
           .setTexture(Texture2D(":/graphics/dots.png"))
-          .addObject(Button(0,311,512,100,L"One player",button_texture).setClickCallBack(
+          .addObject(Button(0,311,512,100,L"Pentago",button_texture).setClickCallBack(
                        [&](){
-                           current_objects.clear();
-                           current_objects.push_back(&*board);
-                        })
-          )
-          .addObject(Button(0,421,512,100,L"Two players",button_texture))
+                           Request_set_game_mode(GAME_MODE::MODE_PENTAGO);
+                           Request_enter_game_layout(GAME_LAYOUT::LOBBY);
+                        }))
+          .addObject(Button(0,421,512,100,L"Pentago XL",button_texture).setClickCallBack(
+                       [&]() {
+                           Request_set_game_mode(GAME_MODE::MODE_PENTAGO_XL);
+                           goToMenu(menu_n_players);
+                        }))
           .addObject(Button(0,631,512,100,L"Back",button_texture).setClickCallBack(
                        [&]() {
                            this->goMenuBack();
                          }))
-          .setKeyCallBack(Qt::Key_Escape,MenuItemResponser(2));
+          .setKeyCallBack(Qt::Key_Escape,MenuItemClicker(2));
+
+      menu_n_players.setPos(200,220);
+      menu_n_players.setSize(624,585);
+      menu_n_players
+          .setTexture(Texture2D(":/graphics/dots.png"))
+          .addObject(Button(0,271,512,100,L"2 players",button_texture).setClickCallBack(
+                       [&]() {
+                           Request_show_lobby(2);
+                         }))
+          .addObject(Button(0,381,512,100,L"3 players",button_texture).setClickCallBack(
+                       [&]() {
+                           Request_show_lobby(3);
+                         }))
+          .addObject(Button(0,491,512,100,L"4 players",button_texture).setClickCallBack(
+                       [&]() {
+                           Request_show_lobby(4);
+                         }))
+          .addObject(Button(0,672,512,100,L"Back",button_texture).setClickCallBack(
+                       [&]() {
+                           this->goMenuBack();
+                         }))
+          .setKeyCallBack(Qt::Key_Escape,MenuItemClicker(3));
 
       menu_load_game.setPos(200,260);
       menu_load_game.setSize(624,504);
@@ -396,7 +432,20 @@ protected:
                        [&]() {
                            this->goMenuBack();
                          }))
-          .setKeyCallBack(Qt::Key_Escape,MenuItemResponser(1));
+          .setKeyCallBack(Qt::Key_Escape,MenuItemClicker(1));
+
+      menu_save_game.setPos(200,260);
+      menu_save_game.setSize(624,504);
+      menu_save_game
+          .setTexture(Texture2D(":/graphics/dots.png"))
+          .addObject(Button(0,311,512,100,L"Autosave",button_texture))
+          .addObject(Button(0,631,512,100,L"Back",button_texture).setClickCallBack(
+                       [&]() {
+                           this->goMenuBack();
+                         }))
+          .setKeyCallBack(Qt::Key_Escape,MenuItemClicker(1));
+
+
 
       menu_join_game.setPos(200,260);
       menu_join_game.setSize(624,504);
@@ -411,7 +460,17 @@ protected:
                        [&]() {
                            this->goMenuBack();
                          }))
-          .setKeyCallBack(Qt::Key_Escape,MenuItemResponser(3));
+          .setKeyCallBack(Qt::Key_Escape,MenuItemClicker(3));
+
+      menu_host_game.setPos(150,200);
+      menu_host_game.setSize(724, 624);
+      menu_host_game
+          .setTexture(Texture2D(":/graphics/dots.png"))
+          .addObject(Button(0,691,512,100,L"Back",button_texture).setClickCallBack(
+                       [&]() {
+                           this->goMenuBack();
+                         }))
+          .setKeyCallBack(Qt::Key_Escape,MenuItemClicker(0));
     }
 
     void goMenuBack() {
@@ -419,184 +478,204 @@ protected:
         current_objects = view_history.top();
         view_history.pop();
       }
-      updateGL();
     }
 
     void goToMenu(Menu& menu) {
       view_history.push(current_objects);
       current_objects.clear();
       current_objects.push_back(&menu);
-      updateGL();
     }
 
+    void openLobby() {
+      //todo
+    }
 
 //    IView: (see iview.h)
 public: //some kind of slots
-      virtual void Show_game_ended(WINNER winner, const string& winner_name) override {
+    virtual void Show_game_ended(WINNER winner, const string& winner_name) override {
 
+    }
+
+    virtual void Set_saves_list(const str_array& save_names,const str_array& saves_info) override {
+
+    }
+
+    virtual void Enable_chat() override  {
+
+    }
+
+    virtual void Disable_chat() override  {
+
+    }
+
+    virtual void Set_game_mode(GAME_MODE mode) {
+
+    }
+
+    virtual void Set_game_layout(GAME_LAYOUT layout) override  {
+      switch(layout) {
+        case GAME_LAYOUT::MAIN_MENU: {
+            while(view_history.size()) {
+                view_history.pop();
+              }
+            current_objects.clear();
+            current_objects.push_back(&main_menu);
+            break;
+          }
+        case GAME_LAYOUT::SAVE_GAME: {
+            Request_get_saves_list();
+            goToMenu(menu_save_game);
+            break;
+          }
+        case GAME_LAYOUT::LOAD_GAME: {
+            Request_get_saves_list();
+            goToMenu(menu_load_game);
+            break;
+          }
+        case GAME_LAYOUT::LOBBY: {
+            openLobby();
+            break;
+          }
+        case GAME_LAYOUT::JOIN_GAME: {
+            goToMenu(menu_join_game);
+            break;
+          }
+        case GAME_LAYOUT::GAME: {
+            while(view_history.size()) {
+                view_history.pop();
+              }
+            current_objects.clear();
+            current_objects.push_back(&*board);
+            break;
+          }
       }
+      updateGL();
+    }
 
-      virtual void Set_saves_list(const str_array& save_names,const str_array& saves_info) override {
+    virtual void Set_lobby_params(LOBBY_STATUS status, const string& lobby_name = L"", int player_count=-1) override {
 
-      }
+    }
 
-      virtual void Enable_chat() override  {
+    virtual void Set_lobby_player_name(int player_num, const string& name) override {
 
-      }
+    }
 
-      virtual void Disable_chat() override  {
+    virtual void Set_lobby_player_color(int player_num, uint32_t rgb) override {
 
-      }
+    }
 
-      virtual void Set_game_layout(GAME_LAYOUT layout) override  {
-        switch(layout) {
-          case GAME_LAYOUT::MAIN_MENU: {
-              while(view_history.size()) {
-                  view_history.pop();
-                }
-              current_objects.clear();
-              current_objects.push_back(&main_menu);
-              break;
-            }
-          case GAME_LAYOUT::SAVE_GAME: {
-              break;
-            }
-          case GAME_LAYOUT::LOAD_GAME: {
-              break;
-            }
-          case GAME_LAYOUT::LOBBY: {
-              break;
-            }
-          case GAME_LAYOUT::JOIN_GAME: {
-              break;
-            }
-          case GAME_LAYOUT::GAME: {
-              break;
-            }
-        }
-        updateGL();
-      }
+    virtual void Set_lobby_player_color_charge_enable(int player_num, bool enabled) override {
 
-      virtual void Set_lobby_params(LOBBY_STATUS status, const string& lobby_name = L"", int player_count=-1) override {
+    }
 
-      }
+    virtual void Set_lobby_player_avatar(int player_num, const char* image) override {
 
-      virtual void Set_lobby_player_name(int player_num, const string& name) override {
+    }
 
-      }
+    virtual void Set_hosts_list(const str_array& hosts) override  {
 
-      virtual void Set_lobby_player_color(int player_num, uint32_t rgb) override {
+    }
 
-      }
+    virtual void Clear_board() override {
 
-      virtual void Set_lobby_player_color_charge_enable(int player_num, bool enabled) override {
+    }
 
-      }
+    virtual void Put_stone(int row, int col, uint32_t rgb) override {
 
-      virtual void Set_lobby_player_avatar(int player_num, const char* image) override {
+    }
 
-      }
+    virtual void Rotate_quadrant(QUADRANT quadrant, DIRECTION direction) override {
 
-      virtual void Set_hosts_list(const str_array& hosts) override  {
+    }
 
-      }
+    virtual void Disable_rotate_quadrant() override {
 
-      virtual void Clear_board() override {
+    }
 
-      }
+    virtual void Enable_rotate_quadrant() override {
 
-      virtual void Put_stone(int row, int col, uint32_t rgb) override {
+    }
 
-      }
+    virtual void Show_quick_message(string text, MESSAGE_TYPE type = MESSAGE_TYPE::M_INFO, int mili_sec=0) override {
 
-      virtual void Rotate_quadrant(QUADRANT quadrant, DIRECTION direction) override {
+    }
 
-      }
+    virtual void Show_message(string text, MESSAGE_BUTTONS buttons = MESSAGE_BUTTONS::OK, MESSAGE_ICON icon=MESSAGE_ICON::I_NONE) override {
 
-      virtual void Disable_rotate_quadrant() override {
+    }
 
-      }
+    virtual void Hide_message() override {
 
-      virtual void Enable_rotate_quadrant() override {
+    }
 
-      }
+    virtual void Ask_user_text_input(const string& question, const string& button_accept_text) override {
 
-      virtual void Show_quick_message(string text, MESSAGE_TYPE type = MESSAGE_TYPE::M_INFO, int mili_sec=0) override {
+    }
 
-      }
+    virtual void Clear_chat() override {
 
-      virtual void Show_message(string text, MESSAGE_BUTTONS buttons = MESSAGE_BUTTONS::OK, MESSAGE_ICON icon=MESSAGE_ICON::I_NONE) override {
+    }
 
-      }
+    virtual void Add_message_to_chat(string from, string text, time_t message_time) override {
 
-      virtual void Hide_message() override {
+    }
 
-      }
+//signals
+    virtual void Request_set_game_mode(GAME_MODE mode) override {
+      parent->Request_set_game_mode(mode);
+    }
 
-      virtual void Ask_user_text_input(const string& question, const string& button_accept_text) override {
-
-      }
-
-      virtual void Clear_chat() override {
-
-      }
-
-      virtual void Add_message_to_chat(string from, string text, time_t message_time) override {
-
-      }
-
-	  //signals
-      virtual void Request_enter_game_layout(GAME_LAYOUT layout) override {
-        parent->Request_enter_game_layout(layout);
-      }
-      virtual void Request_show_lobby(int player_count) override {
-        parent->Request_show_lobby(player_count);
-      }
-      virtual void Request_lobby_ready() override {
-        parent->Request_lobby_ready();
-      }
-      virtual void Request_leave_lobby() override {
-        parent->Request_lobby_ready();
-      }
-      virtual void Request_get_saves_list() override {
-        parent->Request_get_saves_list();
-      }
-      virtual void Request_save_game(const string& save_name) override {
-        parent->Request_save_game(save_name);
-      }
-      virtual void Request_load_game(const string& save_name) override {
-        parent->Request_load_game(save_name);
-      }
-      virtual void Request_get_hosts_list() override {
-        parent->Request_get_hosts_list();
-      }
-      virtual void Request_join_game(const string& host_address) override {
-        parent->Request_join_game(host_address);
-      }
-      virtual void Request_host_game(const string& lobby_name, int player_count, const string& password = L"") override {
-        parent->Request_host_game(lobby_name,player_count,password);
-      }
-      virtual void Request_put_stone(int row, int col) override {
-        parent->Request_put_stone(row,col);
-      }
-      virtual void Request_rotate_quadrant(QUADRANT quadrant, DIRECTION direction) override {
-        parent->Request_rotate_quadrant(quadrant,direction);
-      }
-      virtual void Request_send_to_chat(const string& message) override {
-        parent->Request_send_to_chat(message);
-      }
-      virtual void Request_massage_answer(MESSAGE_ANSWER answer) override {
-        parent->Request_massage_answer(answer);
-      }
-      virtual void Request_user_text_input(bool accepted, const string& text) override {
-        parent->Request_user_text_input(accepted,text);
-      }
-      virtual void Request_leave_game() override {
-        parent->Request_leave_game();
-      }
-      virtual void Requset_change_ivew_to_next() override {
-        parent->Requset_change_ivew_to_next();
-      }
+    virtual void Request_enter_game_layout(GAME_LAYOUT layout) override {
+      parent->Request_enter_game_layout(layout);
+    }
+    virtual void Request_show_lobby(int player_count) override {
+      parent->Request_show_lobby(player_count);
+    }
+    virtual void Request_lobby_ready() override {
+      parent->Request_lobby_ready();
+    }
+    virtual void Request_leave_lobby() override {
+      parent->Request_lobby_ready();
+    }
+    virtual void Request_get_saves_list() override {
+      parent->Request_get_saves_list();
+    }
+    virtual void Request_save_game(const string& save_name) override {
+      parent->Request_save_game(save_name);
+    }
+    virtual void Request_load_game(const string& save_name) override {
+      parent->Request_load_game(save_name);
+    }
+    virtual void Request_get_hosts_list() override {
+      parent->Request_get_hosts_list();
+    }
+    virtual void Request_join_game(const string& host_address) override {
+      parent->Request_join_game(host_address);
+    }
+    virtual void Request_host_game(const string& lobby_name, int player_count, const string& password = L"") override {
+      parent->Request_host_game(lobby_name,player_count,password);
+    }
+    virtual void Request_put_stone(int row, int col) override {
+      parent->Request_put_stone(row,col);
+    }
+    virtual void Request_rotate_quadrant(QUADRANT quadrant, DIRECTION direction) override {
+      parent->Request_rotate_quadrant(quadrant,direction);
+    }
+    virtual void Request_send_to_chat(const string& message) override {
+      parent->Request_send_to_chat(message);
+    }
+    virtual void Request_massage_answer(MESSAGE_ANSWER answer) override {
+      parent->Request_massage_answer(answer);
+    }
+    virtual void Request_user_text_input(bool accepted, const string& text) override {
+      parent->Request_user_text_input(accepted,text);
+    }
+    virtual void Request_leave_game() override {
+      parent->Request_leave_game();
+    }
+    virtual void Requset_change_ivew_to_next() override {
+      parent->Requset_change_ivew_to_next();
+    }
 };
 
 GLview::GLview(): impl(new GLviewImpl(this)) {
@@ -623,13 +702,16 @@ GLview::~GLview() {
 //
 // IView:
 //
-
 void GLview::Show_game_ended(WINNER winner, const string& winner_name) {
   impl->Show_game_ended(winner,winner_name);
 }
 
 void GLview::Set_saves_list(const str_array& save_names,const str_array& saves_info) {
   impl->Set_saves_list(save_names,saves_info);
+}
+
+void GLview::Set_game_mode(GAME_MODE mode) {
+  impl->Set_game_mode(mode);
 }
 
 void GLview::Set_game_layout(GAME_LAYOUT layout) {
@@ -714,14 +796,23 @@ void GLview::Add_message_to_chat(string from, string text, time_t message_time) 
 
 
 //signals
+void GLview::Request_set_game_mode(GAME_MODE mode) {
+  qDebug() << "Request_set_game_mode: "
+           << "mode ="
+           << (mode==GAME_MODE::MODE_PENTAGO?"PENTAGO":"PENTAGO_XL");
+}
+
 void GLview::Request_enter_game_layout(GAME_LAYOUT layout) {
-    qDebug() << "Request_enter_game_layout: "
-             << "layout=" << int(layout);
+  static const char *layouts[] =
+  {"MAIN_MENU","LOBBY","JOIN_GAME",
+   "SAVE_GAME","LOAD_GAME","GAME"};
+  qDebug() << "Request_enter_game_layout: "
+           << "layout =" << layouts[int(layout)];
 }
 
 void GLview::Request_show_lobby(int player_count) {
   qDebug() << "Request_show_lobby: "
-           << "player_count=" << player_count;
+           << "player_count =" << player_count;
 }
 
 void GLview::Request_lobby_ready() {
@@ -738,12 +829,12 @@ void GLview::Request_get_saves_list() {
 
 void GLview::Request_save_game(const string& save_name) {
   qDebug() << "Request_save_game: "
-           << "save_name=" << QString::fromStdWString(save_name);
+           << "save_name =" << QString::fromStdWString(save_name);
 }
 
 void GLview::Request_load_game(const string& save_name) {
   qDebug() << "Request_load_game: "
-           << "save_name=" << QString::fromStdWString(save_name);
+           << "save_name =" << QString::fromStdWString(save_name);
 }
 
 void GLview::Request_get_hosts_list() {
@@ -752,42 +843,42 @@ void GLview::Request_get_hosts_list() {
 
 void GLview::Request_join_game(const string& host_address) {
   qDebug() << "Request_join_game: "
-           << "host_address=" << QString::fromStdWString(host_address);
+           << "host_address =" << QString::fromStdWString(host_address);
 }
 
 void GLview::Request_host_game(const string& lobby_name, int player_count, const string& password) {
   qDebug() << "Request_host_game: "
-           << "name=" <<  QString::fromStdWString(lobby_name) << ' '
-           << "player_count=" << player_count << ' '
-           << "password=" <<  QString::fromStdWString(password);
+           << "name =" <<  QString::fromStdWString(lobby_name) << ' '
+           << "player_count =" << player_count << ' '
+           << "password =" <<  QString::fromStdWString(password);
 }
 
 void GLview::Request_put_stone(int row, int col) {
   qDebug() << "Request_put_stone: "
-           << "row=" << row << ' '
-           << "col=" << col;
+           << "row =" << row << ' '
+           << "col =" << col;
 }
 
 void GLview::Request_rotate_quadrant(QUADRANT quadrant, DIRECTION direction) {
   qDebug() << "Request_rotate_quadrant: "
-           << "quadrant=" << int(quadrant) << ' '
-           << "direction=" << int(direction);
+           << "quadrant =" << int(quadrant) << ' '
+           << "direction =" << (direction==DIRECTION::RIGHT?"RIGHT":"LEFT");
 }
 
 void GLview::Request_send_to_chat(const string& message) {
   qDebug() << "Request_send_to_chat: "
-           << "message=" << QString::fromStdWString(message);
+           << "message =" << QString::fromStdWString(message);
 }
 
 void GLview::Request_massage_answer(MESSAGE_ANSWER answer) {
   qDebug() << "Request_massage_answer: "
-           << "answer=" << int(answer);
+           << "answer =" << int(answer);
 }
 
 void GLview::Request_user_text_input(bool accepted, const string& text) {
   qDebug() << "Request_user_text_output: "   
-           << "accepted=" << accepted
-           << "text=" << QString::fromStdWString(text);
+           << "accepted =" << accepted
+           << "text =" << QString::fromStdWString(text);
 }
 
 void GLview::Request_leave_game() {

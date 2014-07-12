@@ -13,7 +13,7 @@
 #include <unordered_map>
 
 class Menu;
-class MenuItemResponser;
+class MenuItemClicker;
 
 using  MenuKeyCallBack = void(int key, Menu& menu);
 
@@ -68,7 +68,7 @@ public:
 private:
   std::unordered_map<int,std::function<MenuKeyCallBack>> key_call_backs;
 
-  friend class MenuItemResponser;
+  friend class MenuItemClicker;
   Texture2D texture;
   GLRectangleCoord<GLint> pos;
 
@@ -94,10 +94,11 @@ Menu& Menu::addObject(const RenderObjectType& object) {
 }
 
 //just tittle adaptor
-class MenuItemResponser {
+//it can press any item in menu
+class MenuItemClicker {
   unsigned index;
 public:
-  MenuItemResponser(unsigned item_index) {
+  MenuItemClicker(unsigned item_index) {
     index = item_index;
   }
   void operator() (int key, Menu& menu) {

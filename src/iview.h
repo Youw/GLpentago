@@ -85,6 +85,7 @@ public: //some kind of slots
 	virtual void Enable_chat()=0; //only while game or lobby
 	virtual void Disable_chat()=0; //only while game or lobby
 	
+	virtual void Set_game_mode(GAME_MODE mode)=0;//actually sets the board size
 	virtual void Set_game_layout(GAME_LAYOUT layout)=0; /*set the current view mode*/
 	
 	virtual void Set_lobby_params(LOBBY_STATUS status, const string& lobby_name = L"", int player_count=-1)=0;
@@ -117,7 +118,9 @@ public: //some kind of slots
 	virtual void Add_message_to_chat(string from, string text, time_t message_time)=0;
 public: //signals to presenter
 
+	virtual void Request_set_game_mode(GAME_MODE mode)=0;
 	virtual void Request_enter_game_layout(GAME_LAYOUT layout)=0;
+	//Request_enter_game_layout(GAME_LAYOUT::LOBBY) - is the same as Request_show_lobby(2)
 
 	virtual void Request_show_lobby(int player_count)=0;//for local game only
 	virtual void Request_lobby_ready()=0;//start game for local and "ready" for network game

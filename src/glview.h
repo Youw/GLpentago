@@ -32,6 +32,7 @@ public: //some kind of slots
     virtual void Enable_chat() override;
     virtual void Disable_chat() override;
 
+    virtual void Set_game_mode(GAME_MODE mode) override;
     virtual void Set_game_layout(GAME_LAYOUT layout) override;
 
     virtual void Set_lobby_params(LOBBY_STATUS status, const string& lobby_name = L"", int player_count=-1) override;
@@ -62,6 +63,7 @@ public: //some kind of slots
     virtual void Add_message_to_chat(string from, string text, time_t message_time) override;
 
 public://signals to presenter
+    virtual void Request_set_game_mode(GAME_MODE mode);
     virtual void Request_enter_game_layout(GAME_LAYOUT layout) override;
 
     virtual void Request_show_lobby(int player_count) override;
