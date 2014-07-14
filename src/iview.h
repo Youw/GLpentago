@@ -77,7 +77,7 @@ public:
     };
 
 
-public slots: //some kind of slots
+public slots: //slots, basically from presenter
 	virtual void Show_game_ended(WINNER winner, const string& winner_name)=0;
 	//if winner==NO_ONE_WON, winner_name must be ignored
 
