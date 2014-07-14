@@ -353,28 +353,32 @@ protected:
     }
 
     void buildMenus() {
-      Texture2D button_texture(":/graphics/button_menu.jpg");
+      Texture2D texture_button(":/graphics/button_menu.jpg");
+      Texture2D texture_menu(":/graphics/dots.png");
+      Texture2D texture_screwed_background(":/graphics/screwed_background.jpg");
       main_menu.setPos(200,150);
       main_menu.setSize(624,724);
       main_menu
-          .setTexture(Texture2D(":/graphics/dots.png"))
-          .addObject(Button(0,206,512,100,L"New game",button_texture).setClickCallBack(
+          .setTexture(texture_menu)
+          .addObject(Button(0,206,512,100,L"New game",texture_button).setClickCallBack(
                        [&]() {
                            goToMenu(menu_new_game);
                        }))
-          .addObject(Button(0,316,512,100,L"Load game",button_texture).setClickCallBack(
+          .addObject(Button(0,316,512,100,L"Load game",texture_button).setClickCallBack(
                        [&]() {
+                           Request_get_saves_list();
                            Request_enter_game_layout(GAME_LAYOUT::LOAD_GAME);
                        }))
-          .addObject(Button(0,426,512,100,L"Join game",button_texture).setClickCallBack(
+          .addObject(Button(0,426,512,100,L"Join game",texture_button).setClickCallBack(
                        [&]() {
+                           Request_get_hosts_list();
                            Request_enter_game_layout(GAME_LAYOUT::JOIN_GAME);
                        }))
-          .addObject(Button(0,536,512,100,L"Host game",button_texture).setClickCallBack(
+          .addObject(Button(0,536,512,100,L"Host game",texture_button).setClickCallBack(
                        [&]() {
                            goToMenu(menu_host_game);
                        }))
-          .addObject(Button(0,746,512,100,L"Exit",button_texture).setClickCallBack(
+          .addObject(Button(0,746,512,100,L"Exit",texture_button).setClickCallBack(
                        [&]() {
                            this->close();
                          })
@@ -384,18 +388,18 @@ protected:
       menu_new_game.setPos(200,260);
       menu_new_game.setSize(624,504);
       menu_new_game
-          .setTexture(Texture2D(":/graphics/dots.png"))
-          .addObject(Button(0,311,512,100,L"Pentago",button_texture).setClickCallBack(
+          .setTexture(texture_menu)
+          .addObject(Button(0,311,512,100,L"Pentago",texture_button).setClickCallBack(
                        [&](){
                            Request_set_game_mode(GAME_MODE::MODE_PENTAGO);
                            Request_enter_game_layout(GAME_LAYOUT::LOBBY);
                         }))
-          .addObject(Button(0,421,512,100,L"Pentago XL",button_texture).setClickCallBack(
+          .addObject(Button(0,421,512,100,L"Pentago XL",texture_button).setClickCallBack(
                        [&]() {
                            Request_set_game_mode(GAME_MODE::MODE_PENTAGO_XL);
                            goToMenu(menu_n_players);
                         }))
-          .addObject(Button(0,631,512,100,L"Back",button_texture).setClickCallBack(
+          .addObject(Button(0,631,512,100,L"Back",texture_button).setClickCallBack(
                        [&]() {
                            this->goMenuBack();
                          }))
@@ -404,20 +408,20 @@ protected:
       menu_n_players.setPos(200,220);
       menu_n_players.setSize(624,585);
       menu_n_players
-          .setTexture(Texture2D(":/graphics/dots.png"))
-          .addObject(Button(0,271,512,100,L"2 players",button_texture).setClickCallBack(
+          .setTexture(texture_menu)
+          .addObject(Button(0,271,512,100,L"2 players",texture_button).setClickCallBack(
                        [&]() {
                            Request_show_lobby(2);
                          }))
-          .addObject(Button(0,381,512,100,L"3 players",button_texture).setClickCallBack(
+          .addObject(Button(0,381,512,100,L"3 players",texture_button).setClickCallBack(
                        [&]() {
                            Request_show_lobby(3);
                          }))
-          .addObject(Button(0,491,512,100,L"4 players",button_texture).setClickCallBack(
+          .addObject(Button(0,491,512,100,L"4 players",texture_button).setClickCallBack(
                        [&]() {
                            Request_show_lobby(4);
                          }))
-          .addObject(Button(0,672,512,100,L"Back",button_texture).setClickCallBack(
+          .addObject(Button(0,672,512,100,L"Back",texture_button).setClickCallBack(
                        [&]() {
                            this->goMenuBack();
                          }))
@@ -426,9 +430,9 @@ protected:
       menu_load_game.setPos(200,260);
       menu_load_game.setSize(624,504);
       menu_load_game
-          .setTexture(Texture2D(":/graphics/dots.png"))
-          .addObject(Button(0,311,512,100,L"Autosave",button_texture))
-          .addObject(Button(0,631,512,100,L"Back",button_texture).setClickCallBack(
+          .setTexture(texture_menu)
+          .addObject(Button(0,311,512,100,L"Autosave",texture_button))
+          .addObject(Button(0,631,512,100,L"Back",texture_button).setClickCallBack(
                        [&]() {
                            this->goMenuBack();
                          }))
@@ -437,9 +441,9 @@ protected:
       menu_save_game.setPos(200,260);
       menu_save_game.setSize(624,504);
       menu_save_game
-          .setTexture(Texture2D(":/graphics/dots.png"))
-          .addObject(Button(0,311,512,100,L"Autosave",button_texture))
-          .addObject(Button(0,631,512,100,L"Back",button_texture).setClickCallBack(
+          .setTexture(texture_menu)
+          .addObject(Button(0,311,512,100,L"Autosave",texture_button))
+          .addObject(Button(0,631,512,100,L"Back",texture_button).setClickCallBack(
                        [&]() {
                            this->goMenuBack();
                          }))
@@ -450,23 +454,28 @@ protected:
       menu_join_game.setPos(200,260);
       menu_join_game.setSize(624,504);
       menu_join_game
-          .setTexture(Texture2D(":/graphics/dots.png"))
+          .setTexture(texture_menu)
           .addObject(Label(L"Enter Host IP:",0,280, QFont("Snap ITC", 32, 40, false))
-                    .setBackground(Texture2D(":/graphics/screwed_background.jpg"))
+                    .setBackground(texture_screwed_background)
                     )
-          .addObject(TextEdit(0,360,512,80,button_texture).setMaxTextLength(-1))
-          .addObject(Button(0,450,512,100,L"Connect",button_texture))
-          .addObject(Button(0,631,512,100,L"Back",button_texture).setClickCallBack(
+          .addObject(TextEdit(0,360,512,80,texture_button).setMaxTextLength(1024).setText(L"localhost"))
+          .addObject(Button(0,450,512,100,L"Connect",texture_button))
+          .addObject(Button(0,631,512,100,L"Back",texture_button).setClickCallBack(
                        [&]() {
                            this->goMenuBack();
                          }))
           .setKeyCallBack(Qt::Key_Escape,MenuItemClicker(3));
 
-      menu_host_game.setPos(150,200);
-      menu_host_game.setSize(724, 624);
+      menu_host_game.setPos(110,150);
+      menu_host_game.setSize(804,724);
       menu_host_game
-          .setTexture(Texture2D(":/graphics/dots.png"))
-          .addObject(Button(0,691,512,100,L"Back",button_texture).setClickCallBack(
+          .setTexture(texture_menu)
+          .addObject(Label(L"Enter game name:",0,180,QFont("Snap ITC", 32, 40, false))
+                     .setBackground(texture_screwed_background)
+                     )
+          .addObject(TextEdit(0,250,710,80,texture_button).setMaxTextLength(512).setText(L"New game"))
+
+          .addObject(Button(400,771,400,100,L"Back",texture_button).setClickCallBack(
                        [&]() {
                            this->goMenuBack();
                          }))
@@ -523,12 +532,10 @@ public: //some kind of slots
             break;
           }
         case GAME_LAYOUT::SAVE_GAME: {
-            Request_get_saves_list();
             goToMenu(menu_save_game);
             break;
           }
         case GAME_LAYOUT::LOAD_GAME: {
-            Request_get_saves_list();
             goToMenu(menu_load_game);
             break;
           }

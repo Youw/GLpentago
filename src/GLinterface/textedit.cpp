@@ -9,7 +9,7 @@
 TextEdit::TextEdit(
     GLint x_left_top, GLint y_left_top, GLint width, GLint height, const Texture2D &background):
     background(background),
-    text(L"localhost"),
+    text(L"text edit"),
     active(false),
     hovered(false),
     pos(x_left_top,y_left_top),
