@@ -37,7 +37,8 @@ HEADERS  += glview.h \
     GLinterface/GLRectangleCoord.h \
     GLinterface/stone.h \
     GLinterface/pentagoboard.h \
-    iview.h
+    iview.h \
+    tests.h
 
 RESOURCES += \
     GLinterface/GLgraphics.qrc
