@@ -65,7 +65,7 @@ private:
 
 public:
 
-    GLviewImpl(GLview * gl_parent=0, QWidget *qt_parent=0): QGLWidget(qt_parent), parent(gl_parent) {
+    GLviewImpl(GLview * gl_parent=0): parent(gl_parent) {
       clicked_object = nullptr;
       setWindowIcon(QIcon(":/window/pentago.ico"));
       setMouseTracking(true);
@@ -123,7 +123,7 @@ protected:
       board.reset(new PentagoBoard(12,12,1000,1000,2));
 
       board->setStoneSetCallBack([&] (int x, int y) {
-          Request_put_stone(x,y);
+          parent->Request_put_stone(x,y);
         });
       board->setRotateCallBack([&](int quadrant_x, int quadrant_y, bool rotate_right){
           static const QUADRANT quadrants[3][3] = {
@@ -131,7 +131,7 @@ protected:
             {QUADRANT::III, QUADRANT::IV, QUADRANT::VIII},
             {QUADRANT::V,   QUADRANT::VI, QUADRANT::VII}
           };
-          Request_rotate_quadrant(quadrants[quadrant_x][quadrant_y],rotate_right?DIRECTION::RIGHT:DIRECTION::LEFT);
+          parent->Request_rotate_quadrant(quadrants[quadrant_x][quadrant_y],rotate_right?DIRECTION::RIGHT:DIRECTION::LEFT);
         });
 
     }
@@ -366,13 +366,13 @@ protected:
                        }))
           .addObject(Button(0,316,512,100,L"Load game",texture_button).setClickCallBack(
                        [&]() {
-                           Request_get_saves_list();
-                           Request_enter_game_layout(GAME_LAYOUT::LOAD_GAME);
+                           parent->Request_get_saves_list();
+                           parent->Request_enter_game_layout(GAME_LAYOUT::LOAD_GAME);
                        }))
           .addObject(Button(0,426,512,100,L"Join game",texture_button).setClickCallBack(
                        [&]() {
-                           Request_get_hosts_list();
-                           Request_enter_game_layout(GAME_LAYOUT::JOIN_GAME);
+                           parent->Request_get_hosts_list();
+                           parent->Request_enter_game_layout(GAME_LAYOUT::JOIN_GAME);
                        }))
           .addObject(Button(0,536,512,100,L"Host game",texture_button).setClickCallBack(
                        [&]() {
@@ -391,12 +391,12 @@ protected:
           .setTexture(texture_menu)
           .addObject(Button(0,311,512,100,L"Pentago",texture_button).setClickCallBack(
                        [&](){
-                           Request_set_game_mode(GAME_MODE::MODE_PENTAGO);
-                           Request_enter_game_layout(GAME_LAYOUT::LOBBY);
+                           parent->Request_set_game_mode(GAME_MODE::MODE_PENTAGO);
+                           parent->Request_enter_game_layout(GAME_LAYOUT::LOBBY);
                         }))
           .addObject(Button(0,421,512,100,L"Pentago XL",texture_button).setClickCallBack(
                        [&]() {
-                           Request_set_game_mode(GAME_MODE::MODE_PENTAGO_XL);
+                           parent->Request_set_game_mode(GAME_MODE::MODE_PENTAGO_XL);
                            goToMenu(menu_n_players);
                         }))
           .addObject(Button(0,631,512,100,L"Back",texture_button).setClickCallBack(
@@ -411,15 +411,15 @@ protected:
           .setTexture(texture_menu)
           .addObject(Button(0,271,512,100,L"2 players",texture_button).setClickCallBack(
                        [&]() {
-                           Request_show_lobby(2);
+                           parent->Request_show_lobby(2);
                          }))
           .addObject(Button(0,381,512,100,L"3 players",texture_button).setClickCallBack(
                        [&]() {
-                           Request_show_lobby(3);
+                           parent->Request_show_lobby(3);
                          }))
           .addObject(Button(0,491,512,100,L"4 players",texture_button).setClickCallBack(
                        [&]() {
-                           Request_show_lobby(4);
+                           parent->Request_show_lobby(4);
                          }))
           .addObject(Button(0,672,512,100,L"Back",texture_button).setClickCallBack(
                        [&]() {
@@ -584,7 +584,7 @@ public: //some kind of slots
     }
 
     virtual void Clear_board() override {
-
+      qDebug() << "Clear_board emited";
     }
 
     virtual void Put_stone(int row, int col, uint32_t rgb) override {
@@ -625,63 +625,6 @@ public: //some kind of slots
 
     virtual void Add_message_to_chat(string from, string text, time_t message_time) override {
 
-    }
-
-//signals
-    virtual void Request_set_game_mode(GAME_MODE mode) override {
-      parent->Request_set_game_mode(mode);
-    }
-
-    virtual void Request_enter_game_layout(GAME_LAYOUT layout) override {
-      parent->Request_enter_game_layout(layout);
-    }
-    virtual void Request_show_lobby(int player_count) override {
-      parent->Request_show_lobby(player_count);
-    }
-    virtual void Request_lobby_ready() override {
-      parent->Request_lobby_ready();
-    }
-    virtual void Request_leave_lobby() override {
-      parent->Request_lobby_ready();
-    }
-    virtual void Request_get_saves_list() override {
-      parent->Request_get_saves_list();
-    }
-    virtual void Request_save_game(const string& save_name) override {
-      parent->Request_save_game(save_name);
-    }
-    virtual void Request_load_game(const string& save_name) override {
-      parent->Request_load_game(save_name);
-    }
-    virtual void Request_get_hosts_list() override {
-      parent->Request_get_hosts_list();
-    }
-    virtual void Request_join_game(const string& host_address) override {
-      parent->Request_join_game(host_address);
-    }
-    virtual void Request_host_game(const string& lobby_name, int player_count, const string& password = L"") override {
-      parent->Request_host_game(lobby_name,player_count,password);
-    }
-    virtual void Request_put_stone(int row, int col) override {
-      parent->Request_put_stone(row,col);
-    }
-    virtual void Request_rotate_quadrant(QUADRANT quadrant, DIRECTION direction) override {
-      parent->Request_rotate_quadrant(quadrant,direction);
-    }
-    virtual void Request_send_to_chat(const string& message) override {
-      parent->Request_send_to_chat(message);
-    }
-    virtual void Request_massage_answer(MESSAGE_ANSWER answer) override {
-      parent->Request_massage_answer(answer);
-    }
-    virtual void Request_user_text_input(bool accepted, const string& text) override {
-      parent->Request_user_text_input(accepted,text);
-    }
-    virtual void Request_leave_game() override {
-      parent->Request_leave_game();
-    }
-    virtual void Requset_change_ivew_to_next() override {
-      parent->Requset_change_ivew_to_next();
     }
 };
 
@@ -801,99 +744,99 @@ void GLview::Add_message_to_chat(string from, string text, time_t message_time) 
   impl->Add_message_to_chat(from,text,message_time);
 }
 
-
+//old, debug version:
 //signals
-void GLview::Request_set_game_mode(GAME_MODE mode) {
-  qDebug() << "Request_set_game_mode: "
-           << "mode ="
-           << (mode==GAME_MODE::MODE_PENTAGO?"PENTAGO":"PENTAGO_XL");
-}
+//void GLview::Request_set_game_mode(GAME_MODE mode) {
+//  qDebug() << "Request_set_game_mode: "
+//           << "mode ="
+//           << (mode==GAME_MODE::MODE_PENTAGO?"PENTAGO":"PENTAGO_XL");
+//}
 
-void GLview::Request_enter_game_layout(GAME_LAYOUT layout) {
-  static const char *layouts[] =
-  {"MAIN_MENU","LOBBY","JOIN_GAME",
-   "SAVE_GAME","LOAD_GAME","GAME"};
-  qDebug() << "Request_enter_game_layout: "
-           << "layout =" << layouts[int(layout)];
-}
+//void GLview::Request_enter_game_layout(GAME_LAYOUT layout) {
+//  static const char *layouts[] =
+//  {"MAIN_MENU","LOBBY","JOIN_GAME",
+//   "SAVE_GAME","LOAD_GAME","GAME"};
+//  qDebug() << "Request_enter_game_layout: "
+//           << "layout =" << layouts[int(layout)];
+//}
 
-void GLview::Request_show_lobby(int player_count) {
-  qDebug() << "Request_show_lobby: "
-           << "player_count =" << player_count;
-}
+//void GLview::Request_show_lobby(int player_count) {
+//  qDebug() << "Request_show_lobby: "
+//           << "player_count =" << player_count;
+//}
 
-void GLview::Request_lobby_ready() {
-  qDebug() << "Request_lobby_ready";
-}
+//void GLview::Request_lobby_ready() {
+//  qDebug() << "Request_lobby_ready";
+//}
 
-void GLview::Request_leave_lobby() {
-  qDebug() << "Request_leave_lobby";
-}
+//void GLview::Request_leave_lobby() {
+//  qDebug() << "Request_leave_lobby";
+//}
 
-void GLview::Request_get_saves_list() {
-  qDebug() << "Request_get_saves_list";
-}
+//void GLview::Request_get_saves_list() {
+//  qDebug() << "Request_get_saves_list";
+//}
 
-void GLview::Request_save_game(const string& save_name) {
-  qDebug() << "Request_save_game: "
-           << "save_name =" << QString::fromStdWString(save_name);
-}
+//void GLview::Request_save_game(const string& save_name) {
+//  qDebug() << "Request_save_game: "
+//           << "save_name =" << QString::fromStdWString(save_name);
+//}
 
-void GLview::Request_load_game(const string& save_name) {
-  qDebug() << "Request_load_game: "
-           << "save_name =" << QString::fromStdWString(save_name);
-}
+//void GLview::Request_load_game(const string& save_name) {
+//  qDebug() << "Request_load_game: "
+//           << "save_name =" << QString::fromStdWString(save_name);
+//}
 
-void GLview::Request_get_hosts_list() {
-  qDebug() << "Request_get_hosts_list";
-}
+//void GLview::Request_get_hosts_list() {
+//  qDebug() << "Request_get_hosts_list";
+//}
 
-void GLview::Request_join_game(const string& host_address) {
-  qDebug() << "Request_join_game: "
-           << "host_address =" << QString::fromStdWString(host_address);
-}
+//void GLview::Request_join_game(const string& host_address) {
+//  qDebug() << "Request_join_game: "
+//           << "host_address =" << QString::fromStdWString(host_address);
+//}
 
-void GLview::Request_host_game(const string& lobby_name, int player_count, const string& password) {
-  qDebug() << "Request_host_game: "
-           << "name =" <<  QString::fromStdWString(lobby_name) << ' '
-           << "player_count =" << player_count << ' '
-           << "password =" <<  QString::fromStdWString(password);
-}
+//void GLview::Request_host_game(const string& lobby_name, int player_count, const string& password) {
+//  qDebug() << "Request_host_game: "
+//           << "name =" <<  QString::fromStdWString(lobby_name) << ' '
+//           << "player_count =" << player_count << ' '
+//           << "password =" <<  QString::fromStdWString(password);
+//}
 
-void GLview::Request_put_stone(int row, int col) {
-  qDebug() << "Request_put_stone: "
-           << "row =" << row << ' '
-           << "col =" << col;
-}
+//void GLview::Request_put_stone(int row, int col) {
+//  qDebug() << "Request_put_stone: "
+//           << "row =" << row << ' '
+//           << "col =" << col;
+//}
 
-void GLview::Request_rotate_quadrant(QUADRANT quadrant, DIRECTION direction) {
-  qDebug() << "Request_rotate_quadrant: "
-           << "quadrant =" << int(quadrant) << ' '
-           << "direction =" << (direction==DIRECTION::RIGHT?"RIGHT":"LEFT");
-}
+//void GLview::Request_rotate_quadrant(QUADRANT quadrant, DIRECTION direction) {
+//  qDebug() << "Request_rotate_quadrant: "
+//           << "quadrant =" << int(quadrant) << ' '
+//           << "direction =" << (direction==DIRECTION::RIGHT?"RIGHT":"LEFT");
+//}
 
-void GLview::Request_send_to_chat(const string& message) {
-  qDebug() << "Request_send_to_chat: "
-           << "message =" << QString::fromStdWString(message);
-}
+//void GLview::Request_send_to_chat(const string& message) {
+//  qDebug() << "Request_send_to_chat: "
+//           << "message =" << QString::fromStdWString(message);
+//}
 
-void GLview::Request_massage_answer(MESSAGE_ANSWER answer) {
-  qDebug() << "Request_massage_answer: "
-           << "answer =" << int(answer);
-}
+//void GLview::Request_massage_answer(MESSAGE_ANSWER answer) {
+//  qDebug() << "Request_massage_answer: "
+//           << "answer =" << int(answer);
+//}
 
-void GLview::Request_user_text_input(bool accepted, const string& text) {
-  qDebug() << "Request_user_text_output: "   
-           << "accepted =" << accepted
-           << "text =" << QString::fromStdWString(text);
-}
+//void GLview::Request_user_text_input(bool accepted, const string& text) {
+//  qDebug() << "Request_user_text_output: "
+//           << "accepted =" << accepted
+//           << "text =" << QString::fromStdWString(text);
+//}
 
-void GLview::Request_leave_game() {
-  qDebug() << "Request_leave_game";
-}
+//void GLview::Request_leave_game() {
+//  qDebug() << "Request_leave_game";
+//}
 
 
-void GLview::Requset_change_ivew_to_next() {
-  qDebug() << "Requset_change_ivew_to_next";
-}
+//void GLview::Requset_change_ivew_to_next() {
+//  qDebug() << "Requset_change_ivew_to_next";
+//}
 
