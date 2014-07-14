@@ -1,6 +1,7 @@
 #ifndef IVIEW_H
 #define IVIEW_H
 
+#include <QObject>
 #include <string>
 #include <cstdint>//uint32_t
 #include <ctime>//time_t
@@ -9,8 +10,9 @@
 using string = std::wstring;
 using str_array =  std::vector<string>;
 
-class IView
+class IView: public QObject
 {
+  Q_OBJECT
 public:
 
     virtual ~IView () { }
@@ -75,8 +77,7 @@ public:
     };
 
 
-//none of slots or signals can be blockable
-public: //some kind of slots
+public slots: //some kind of slots
 	virtual void Show_game_ended(WINNER winner, const string& winner_name)=0;
 	//if winner==NO_ONE_WON, winner_name must be ignored
 
@@ -116,36 +117,36 @@ public: //some kind of slots
 	
 	virtual void Clear_chat()=0;
 	virtual void Add_message_to_chat(string from, string text, time_t message_time)=0;
-public: //signals to presenter
+signals: //signals to presenter
 
-	virtual void Request_set_game_mode(GAME_MODE mode)=0;
-	virtual void Request_enter_game_layout(GAME_LAYOUT layout)=0;
+	void Request_set_game_mode(GAME_MODE mode);
+	void Request_enter_game_layout(GAME_LAYOUT);
 	//Request_enter_game_layout(GAME_LAYOUT::LOBBY) - is the same as Request_show_lobby(2)
 
-	virtual void Request_show_lobby(int player_count)=0;//for local game only
-	virtual void Request_lobby_ready()=0;//start game for local and "ready" for network game
-	virtual void Request_leave_lobby()=0;
+	void Request_show_lobby(int player_count);//for local game only
+	void Request_lobby_ready();//start game for local and "ready" for network game
+	void Request_leave_lobby();
 	
-	virtual void Request_get_saves_list()=0;
-	virtual void Request_save_game(const string& save_name)=0;
-	virtual void Request_load_game(const string& save_name)=0;
+	void Request_get_saves_list();
+	void Request_save_game(const string& save_name);
+	void Request_load_game(const string& save_name);
 	
-	virtual void Request_get_hosts_list()=0;
-	virtual void Request_join_game(const string& host_address)=0;
-	virtual void Request_host_game(const string& lobby_name, int player_count, const string& password = L"")=0;
+	void Request_get_hosts_list();
+	void Request_join_game(const string& host_address);
+	void Request_host_game(const string& lobby_name, int player_count, const string& password = L"");
     
-	virtual void Request_put_stone(int row, int col)=0;
-	virtual void Request_rotate_quadrant(QUADRANT quadrant, DIRECTION direction)=0;
+        void Request_put_stone(int row, int col);
+        void Request_rotate_quadrant(QUADRANT quadrant, DIRECTION direction);
 	
-	virtual void Request_send_to_chat(const string& message)=0;
+	void Request_send_to_chat(const string& message);
 	
-	virtual void Request_massage_answer(MESSAGE_ANSWER answer)=0;
+	void Request_massage_answer(MESSAGE_ANSWER answer);
 
-	virtual void Request_user_text_input(bool accepted, const string& text)=0;
+	void Request_user_text_input(bool accepted, const string& text);
 	
-	virtual void Request_leave_game()=0;
+	void Request_leave_game();
 
-	virtual void Requset_change_ivew_to_next()=0; //Easter Egg =) (let it be some hotkey, like Ctrl+F8)
+	void Requset_change_ivew_to_next(); //Easter Egg =) (let it be some hotkey, like Ctrl+F8)
 
 };
 

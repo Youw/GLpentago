@@ -1,14 +1,14 @@
 #include "glview.h"
 #include <QApplication>
+#include <QObject>
 #include <QDir>
-#include <QtGlobal>
 
 class PresenterEmulator {
   GLview & view;
 public:
   PresenterEmulator(GLview& v): view(v) {
     view.Set_game_layout(GLview::GAME_LAYOUT::MAIN_MENU);
-    view.connect(&view,SIGNAL(Request_enter_game_layout(GLview::GAME_LAYOUT)),SLOT(Set_game_layout(GLview::GAME_LAYOUT)));
+    view.connect(&view,SIGNAL(Request_enter_game_layout(GAME_LAYOUT)),SLOT(Set_game_layout(GAME_LAYOUT)));
   }
 
 };
@@ -22,6 +22,7 @@ int main(int argc, char *argv[])
   QApplication a(argc, argv);
   GLview w;
   PresenterEmulator presenter(w);
+  w.dumpObjectInfo();
   (void)presenter;
   return a.exec();
 }
